@@ -70,6 +70,9 @@ The goal is to move away from the mess of traditional web dev and toward a unifi
 
 - **Fudgel Runtime:** Developing the "Fudgel Browser" for running .paf files directly.
 
+# 🚀 Why "Fudgel"?
+Derived from the archaic English word meaning "to pretend to work when in reality one is not doing anything." Fudgel is the ultimate "lazy" orchestrator. It doesn't perform calculations, it doesn't paint pixels, and it doesn't manage memory. It simply describes the intent, allowing the engine to handle the heavy lifting with game-engine efficiency.
+
 # 🤝 Contributing
 
 Fudgel is a part of the ProtoSpeech foundation. If you are interested in the intersection of ECS, functional programming, and high-performance UI orchestration, we’d love to hear from you.
