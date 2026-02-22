@@ -4,27 +4,29 @@ The Meta-Language of Intent. Orchestrating complexity by doing "nothing" at all.
  [Fudgel.org](https://Fudgel.org)
  
 # ✨ What is Fudgel?
-Fudgel is a declarative, orchestration-centric programming language and ecosystem. Unlike traditional languages that focus on *how* to execute code, Fudgel focuses on the **semantic structure** of an application, and how the data propagates.
+Fudgel is not a general-purpose programming language in the traditional sense. It is a declarative orchestration layer, more like SQL for Applications than Python or C.
 
-Derived from the archaic English word meaning "to pretend to work when in reality one is not doing anything," Fudgel acts as a high-level conductor. It coordinates a specialized stack of libraries to handle execution, keeping the core logic deterministic, concurrent, and ultra-efficient.
+Fudgel is the emergent result of three core Data Sublanguages (DSLs) running in a single, unified substrate. 
+
+It describes the intent of an application, while specialized runtimes handle the execution, keeping the core logic deterministic, concurrent, and ultra-efficient.
 
 # 🧠 The Core Philosophy
 Modern web stacks are heavy and fragmented. Fudgel applies Game Engine optimizations (ECS, Signal Graphs, and Determinism) to general-purpose applications. It doesn't "work" in the traditional sense; it describes the state and lets the engine and specialized runtimes handle the heavy lifting.
 
 # 🏗️ The Ecosystem
-
 Fudgel is built on a modular stack of Data Sublanguages (DSLs) and atomic libraries, each sandboxed to their own data and designed to compile down to bare-metal instructions.
 
-# 🛡️ Core DSLs
-The three pillars of the Fudgel architecture:
-| DSL    | Meaning | Responsibility                                           |
-|--------|---------|----------------------------------------------------------|
-| Bija   | Seed    | Entity Component System (ECS) — The data substrate.      |
-| Rumus  | Formula | Functional Programming — Pure logic and transformations. |
-| Viesti | Relay   | Signal Graph — Reactive event and data propagation.      | 
+# 🛡️ The Fudgel Trinity
+Fudgel's architecture exists at the intersection of three distinct pillars :
+| DSL    | Meaning | Implementation | Responsibility |
+|--------|---------|----------------|------------------------------------------|
+| Bija   | Seed    | Static Entity Component System | It defines the "what", the data structures and state.|
+| Rumus  | Formula | Functional Logic | It defines the "how", the pure transformations and mathematical rules. |
+| Viesti | Relay   | Signal Graph | It defines the "where", the reactive flow and propagation of data between Bija and Rumus.| 
 
 # 📚 Specialized Libraries
-Each library is "agnostic" and focuses on a single domain of the application:
+While the DSL's form the core language, Fudgel also orchestrates an ecosystem of Domain-Specific Libraries. Each is "agnostic", they don't know about each other; they only know how to operate on the Bija state they are given.
+
 | Library | Meaning        | Responsibility                         |
 |---------|----------------|----------------------------------------|
 | Tipus   | Type           | User Input handling.                   |
@@ -53,9 +55,12 @@ Each library is "agnostic" and focuses on a single domain of the application:
 
 # 🛠️ Status: Under Development
 
-Fudgel is currently in the brainstorming and architectural prototyping phase.
+Fudgel is currently in the brainstorming and architectural prototyping phase. It is "usable" only when the development environment fully supports the interplay of its three core DSLs. Our primary goals are:
+- The Fudgel IDE: A phrase-bound, visual-textual environment where Bija, Rumus, and Viesti can be composed.
+- The PAF (Portable Application Format): A binary-efficient format that stores the orchestrated intent of the Three DSL's.
+- The Fudgel Runtime: A specialized execution environment (the "Fudgel Browser") that consumes PAF files and renders them directly to the hardware.
 
-The goal is to move away from the "Text-Editing Anxiety" of traditional web dev and toward a unified environment where layout, logic, and rendering are perfectly synchronized.
+The goal is to move away from the mess of traditional web dev and toward a unified environment where layout, logic, and rendering are perfectly synchronized.
 
 # 🛣️ Current Roadmap:
 
