@@ -1,0 +1,2414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fudgel — A Meta-Language of Intent</title>
+  <meta name="description" content="Fudgel is a meta-language of intent. Three sub-languages. One job each. Compiles direct to bare metal with no intermediate abstraction layer." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0c0800;
+      --bg-1:       #130e03;
+      --bg-2:       #1a1206;
+      --bg-3:       #231808;
+      --border:     #3a2308;
+      --border-2:   #6b4010;
+      --amber:      #d97b0e;
+      --amber-lt:   #f5ce6e;
+      --amber-dim:  #8a5010;
+      --cream:      #eedaaa;
+      --cream-dim:  #aa8850;
+      --teal:       #2db8b0;
+      --teal-dim:   #1a6a65;
+      --rust:       #c84810;
+      --rust-dim:   #7a2c0a;
+      --purple:     #6030d0;
+      --text-1:     #eedaaa;
+      --text-2:     #b09050;
+      --text-3:     #6a4828;
+      --shadow:     rgba(0,0,0,0.8);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text-1);
+      font-family: 'DM Mono', monospace;
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── Nav ─────────────────────────────────────────────────── */
+
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(12,8,0,0.92);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      padding: 0 40px;
+      height: 52px;
+      gap: 32px;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .nav-hex {
+      font-size: 22px;
+      color: var(--amber-lt);
+      line-height: 1;
+    }
+
+    .nav-wordmark {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      letter-spacing: 0.1em;
+      color: var(--cream);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      margin-left: auto;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-2);
+      text-decoration: none;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--amber-lt); }
+
+    .nav-cta {
+      background: var(--amber);
+      color: var(--bg) !important;
+      padding: 6px 16px;
+      border: 2px solid var(--amber-lt);
+      border-radius: 2px;
+    }
+
+    .nav-cta:hover { background: var(--amber-lt) !important; color: var(--bg) !important; }
+
+    /* ── Hero ────────────────────────────────────────────────── */
+
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 100px 40px 80px;
+      overflow: hidden;
+    }
+
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0.4;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 30%, transparent 100%);
+    }
+
+    .hero-glow {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(200,72,16,0.12) 0%, transparent 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    /* Floating geometry */
+    .geo {
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .geo-1 {
+      top: 18%;
+      left: 8%;
+      width: 80px; height: 80px;
+      border: 3px solid var(--amber-dim);
+      border-radius: 50%;
+      animation: float-a 9s ease-in-out infinite;
+    }
+
+    .geo-2 {
+      top: 25%;
+      right: 10%;
+      width: 60px; height: 60px;
+      border: 3px solid var(--teal-dim);
+      transform: rotate(45deg);
+      animation: float-b 11s ease-in-out infinite;
+    }
+
+    .geo-3 {
+      bottom: 22%;
+      left: 12%;
+      width: 100px; height: 100px;
+      border: 2px solid var(--rust-dim);
+      clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+      animation: float-a 13s ease-in-out infinite reverse;
+    }
+
+    .geo-4 {
+      bottom: 28%;
+      right: 8%;
+      width: 50px; height: 50px;
+      background: var(--amber-dim);
+      opacity: 0.4;
+      animation: float-b 7s ease-in-out infinite;
+    }
+
+    .geo-5 {
+      top: 60%;
+      left: 6%;
+      width: 30px; height: 30px;
+      border: 2px solid var(--teal);
+      border-radius: 50%;
+      opacity: 0.5;
+      animation: float-a 6s ease-in-out infinite 1s;
+    }
+
+    @keyframes float-a {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-24px) rotate(8deg); }
+    }
+
+    @keyframes float-b {
+      0%, 100% { transform: translateY(0px) rotate(45deg); }
+      50% { transform: translateY(20px) rotate(53deg); }
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      max-width: 900px;
+    }
+
+    .hero-label {
+      display: inline-block;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--teal);
+      border: 1px solid var(--teal-dim);
+      padding: 4px 14px;
+      border-radius: 2px;
+      margin-bottom: 28px;
+    }
+
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(96px, 18vw, 200px);
+      line-height: 0.88;
+      letter-spacing: 0.05em;
+      color: var(--cream);
+      text-shadow:
+        6px 6px 0 var(--rust),
+        12px 12px 0 rgba(200,72,16,0.3);
+      margin-bottom: 12px;
+    }
+
+    .hero-sub {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(22px, 4vw, 42px);
+      letter-spacing: 0.15em;
+      color: var(--amber-lt);
+      margin-bottom: 32px;
+      text-shadow: 2px 2px 0 var(--bg);
+    }
+
+    .hero-desc {
+      font-size: 16px;
+      color: var(--text-2);
+      max-width: 580px;
+      margin: 0 auto 44px;
+      line-height: 1.8;
+    }
+
+    .hero-desc em {
+      font-style: normal;
+      color: var(--cream);
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      font-weight: 500;
+      text-decoration: none;
+      border-radius: 2px;
+      transition: all 0.15s;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--amber);
+      color: var(--bg);
+      border: 2px solid var(--amber-lt);
+      box-shadow: 4px 4px 0 var(--rust);
+    }
+
+    .btn-primary:hover {
+      background: var(--amber-lt);
+      transform: translate(-1px, -1px);
+      box-shadow: 6px 6px 0 var(--rust);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--cream);
+      border: 2px solid var(--border-2);
+      box-shadow: 4px 4px 0 var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--cream-dim);
+      background: var(--bg-2);
+      transform: translate(-1px, -1px);
+      box-shadow: 6px 6px 0 var(--border);
+    }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-3);
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      animation: bounce 2s ease-in-out infinite;
+    }
+
+    .hero-scroll::after {
+      content: '';
+      width: 1px;
+      height: 36px;
+      background: linear-gradient(var(--text-3), transparent);
+    }
+
+    @keyframes bounce {
+      0%, 100% { opacity: 0.4; transform: translateX(-50%) translateY(0); }
+      50% { opacity: 1; transform: translateX(-50%) translateY(6px); }
+    }
+
+    /* ── Shared section styles ───────────────────────────────── */
+
+    section {
+      padding: 100px 40px;
+    }
+
+    .section-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-tag {
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-tag::before {
+      content: '';
+      width: 30px;
+      height: 1px;
+      background: var(--amber-dim);
+    }
+
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(42px, 7vw, 80px);
+      line-height: 0.92;
+      color: var(--cream);
+      letter-spacing: 0.04em;
+      margin-bottom: 20px;
+    }
+
+    .section-title span {
+      color: var(--amber-lt);
+    }
+
+    .section-lead {
+      font-size: 16px;
+      color: var(--text-2);
+      max-width: 600px;
+      line-height: 1.85;
+      margin-bottom: 60px;
+    }
+
+    /* ── Divider ─────────────────────────────────────────────── */
+
+    .divider {
+      border: none;
+      height: 1px;
+      background: var(--border);
+      margin: 0;
+    }
+
+    /* ── Reveal animation ────────────────────────────────────── */
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* ── Trinity section ─────────────────────────────────────── */
+
+    #trinity {
+      background: var(--bg-1);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .trinity-table {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0;
+      border: 2px solid var(--border-2);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 60px;
+    }
+
+    .trinity-col {
+      padding: 36px 32px;
+      border-right: 1px solid var(--border);
+      position: relative;
+    }
+
+    .trinity-col:last-child { border-right: none; }
+
+    .trinity-col::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+
+    .trinity-col.bija::before  { background: var(--amber); }
+    .trinity-col.rumus::before { background: var(--teal); }
+    .trinity-col.viesti::before { background: var(--rust); }
+
+    .trinity-tag {
+      font-size: 9px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 8px;
+    }
+
+    .trinity-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 38px;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .trinity-col.bija  .trinity-name { color: var(--amber-lt); }
+    .trinity-col.rumus .trinity-name { color: var(--teal); }
+    .trinity-col.viesti .trinity-name { color: var(--rust); }
+
+    .trinity-meaning {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 20px;
+      font-style: italic;
+    }
+
+    .trinity-desc {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.8;
+      margin-bottom: 28px;
+    }
+
+    .trinity-rule {
+      font-size: 11px;
+      color: var(--text-3);
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+      font-style: italic;
+      line-height: 1.7;
+    }
+
+    /* ── Code blocks ─────────────────────────────────────────── */
+
+    .code-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      padding: 8px 16px;
+      background: var(--bg-2);
+      border-bottom: 1px solid var(--border);
+      gap: 10px;
+    }
+
+    .code-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--border-2);
+    }
+
+    .code-dot.bija  { background: var(--amber-dim); }
+    .code-dot.rumus { background: var(--teal-dim); }
+    .code-dot.viesti { background: var(--rust-dim); }
+
+    .code-lang {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-left: auto;
+    }
+
+    .code-body {
+      padding: 20px 20px;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    /* syntax colours */
+    .kw  { color: var(--amber-lt); }     /* @, ? */
+    .ent { color: var(--cream); font-weight: 600; }  /* entity names */
+    .prop{ color: #6dc9c0; }             /* property names */
+    .val { color: #d4a06a; }             /* values */
+    .ref { color: var(--amber); }        /* # references */
+    .sig { color: var(--rust); }         /* ~ signals */
+    .cmt { color: var(--text-3); font-style: italic; } /* comments */
+    .meta{ color: var(--teal); }         /* {} metadata */
+    .op  { color: #c090d0; }             /* operators */
+    .fn  { color: #90c8e0; }             /* function names */
+
+    /* ── Three examples strip ────────────────────────────────── */
+
+    .examples-strip {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+    }
+
+    /* ── The false tradeoff ──────────────────────────────────── */
+
+    #tradeoff {
+      background: var(--bg);
+    }
+
+    .tradeoff-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: start;
+    }
+
+    .tradeoff-manifesto {
+      font-size: 17px;
+      color: var(--text-2);
+      line-height: 2;
+    }
+
+    .tradeoff-manifesto strong {
+      color: var(--cream);
+      font-weight: 500;
+    }
+
+    .tradeoff-pull {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      letter-spacing: 0.06em;
+      color: var(--amber-lt);
+      border-left: 4px solid var(--amber);
+      padding-left: 24px;
+      line-height: 1.3;
+      margin: 32px 0;
+    }
+
+    .axioms {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .axiom {
+      display: flex;
+      gap: 16px;
+      padding: 20px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--amber-dim);
+    }
+
+    .axiom-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+      color: var(--amber-dim);
+      line-height: 1;
+      flex-shrink: 0;
+      width: 36px;
+    }
+
+    .axiom-text {
+      font-size: 14px;
+      color: var(--text-2);
+      line-height: 1.7;
+    }
+
+    .axiom-text strong {
+      color: var(--cream);
+      display: block;
+      font-weight: 500;
+      margin-bottom: 4px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ── Demo section ────────────────────────────────────────── */
+
+    #demo {
+      background: var(--bg-1);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .demo-preview {
+      position: relative;
+      border: 2px solid var(--border-2);
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 8px 8px 0 var(--border), 16px 16px 0 rgba(0,0,0,0.4);
+    }
+
+    .demo-preview-bar {
+      background: var(--bg-3);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .frame-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+
+    .frame-dot.r { background: #c84030; }
+    .frame-dot.y { background: #c89020; }
+    .frame-dot.g { background: #50a030; }
+
+    .frame-title {
+      font-size: 11px;
+      color: var(--text-3);
+      letter-spacing: 0.1em;
+      margin-left: 8px;
+    }
+
+    .demo-screenshot {
+      background: var(--bg);
+      height: 340px;
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      overflow: hidden;
+    }
+
+    .demo-pane {
+      flex: 1;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .demo-pane:last-child { border-right: none; }
+
+    .demo-pane-label {
+      padding: 6px 14px;
+      background: var(--bg-2);
+      border-bottom: 1px solid var(--border);
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      flex-shrink: 0;
+    }
+
+    .demo-pane-code {
+      padding: 16px 14px;
+      overflow: hidden;
+      white-space: pre;
+      line-height: 1.75;
+      flex: 1;
+      -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+      mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+    }
+
+    .demo-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(12, 8, 0, 0.55);
+      backdrop-filter: blur(2px);
+    }
+
+    .demo-open-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+    }
+
+    .demo-open-pill {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--amber);
+      color: var(--bg);
+      padding: 16px 32px;
+      border: 2px solid var(--amber-lt);
+      border-radius: 2px;
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      box-shadow: 5px 5px 0 var(--rust);
+      transition: all 0.15s;
+    }
+
+    .demo-open-btn:hover .demo-open-pill {
+      background: var(--amber-lt);
+      transform: translate(-1px, -1px);
+      box-shadow: 7px 7px 0 var(--rust);
+    }
+
+    .demo-open-arrow {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .demo-open-note {
+      font-size: 11px;
+      color: var(--cream);
+      letter-spacing: 0.1em;
+      opacity: 0.7;
+    }
+
+    /* ── Invariants / Architecture ──────────────────────────── */
+
+    #architecture {
+      background: var(--bg-1);
+      border-top: 1px solid var(--border);
+    }
+
+    .invariants-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .invariant {
+      padding: 20px 24px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .invariant::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+    }
+
+    .invariant.bj::after  { background: var(--amber-dim); }
+    .invariant.rm::after  { background: var(--teal-dim); }
+    .invariant.vi::after  { background: var(--rust-dim); }
+    .invariant.ar::after  { background: var(--purple); }
+
+    .invariant-code {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 10px;
+    }
+
+    .invariant.bj  .invariant-code { color: var(--amber-dim); }
+    .invariant.rm  .invariant-code { color: var(--teal-dim); }
+    .invariant.vi  .invariant-code { color: var(--rust-dim); }
+    .invariant.ar  .invariant-code { color: var(--purple); }
+
+    .invariant p {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.7;
+    }
+
+    .invariant strong {
+      color: var(--cream);
+      font-weight: 500;
+    }
+
+    /* ── Libraries ──────────────────────────────────────────── */
+
+    #libraries {
+      background: var(--bg);
+    }
+
+    .lib-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .lib-card {
+      padding: 20px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .lib-card:hover {
+      border-color: var(--border-2);
+      background: var(--bg-3);
+    }
+
+    .lib-card.foundational {
+      border-color: var(--amber-dim);
+      background: var(--bg-3);
+    }
+
+    .lib-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      letter-spacing: 0.08em;
+      color: var(--cream);
+      margin-bottom: 2px;
+    }
+
+    .lib-meaning {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--amber-dim);
+      margin-bottom: 10px;
+    }
+
+    .lib-card.foundational .lib-meaning { color: var(--amber); }
+
+    .lib-desc {
+      font-size: 12px;
+      color: var(--text-3);
+      line-height: 1.6;
+    }
+
+    .lib-badge {
+      display: inline-block;
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--amber);
+      border: 1px solid var(--amber-dim);
+      padding: 2px 8px;
+      margin-bottom: 12px;
+      border-radius: 2px;
+    }
+
+    /* ── Library groups ─────────────────────────────────────────── */
+
+    .lib-groups {
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+    }
+
+    .lib-group {}
+
+    .lib-group-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .lib-group-bar {
+      width: 3px;
+      height: 18px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .lib-group-label {
+      font-size: 9px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .lib-group-note {
+      font-size: 11px;
+      color: var(--text-3);
+      font-style: italic;
+      margin-left: auto;
+    }
+
+    .lib-group-bar.compilation { background: var(--amber); }
+    .lib-group-label.compilation { color: var(--amber); }
+
+    .lib-group-bar.visual { background: var(--teal); }
+    .lib-group-label.visual { color: var(--teal); }
+
+    .lib-group-bar.runtime { background: var(--rust); }
+    .lib-group-label.runtime { color: var(--rust); }
+
+    .lib-group-bar.application { background: var(--cream-dim); }
+    .lib-group-label.application { color: var(--cream-dim); }
+
+    .lib-group-bar.polishing { background: var(--purple); }
+    .lib-group-label.polishing { color: var(--purple); }
+
+    .lib-group .lib-grid {
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+
+    .lib-card.compilation { border-left: 2px solid var(--amber-dim); }
+    .lib-card.visual      { border-left: 2px solid var(--teal-dim); }
+    .lib-card.runtime     { border-left: 2px solid var(--rust-dim); }
+    .lib-card.application { border-left: 2px solid var(--border-2); }
+    .lib-card.polishing   { border-left: 2px solid rgba(96,48,208,0.5); }
+
+    /* ── Spec CTA ────────────────────────────────────────────── */
+
+    #cta {
+      background: var(--bg-2);
+      border-top: 1px solid var(--border);
+      padding: 100px 40px;
+      text-align: center;
+    }
+
+    .cta-hex-grid {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    #cta { position: relative; overflow: hidden; }
+
+    .cta-inner {
+      position: relative;
+      z-index: 2;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .cta-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(52px, 10vw, 110px);
+      line-height: 0.9;
+      color: var(--cream);
+      letter-spacing: 0.04em;
+      text-shadow: 4px 4px 0 var(--rust);
+      margin-bottom: 20px;
+    }
+
+    .cta-sub {
+      font-size: 16px;
+      color: var(--text-2);
+      line-height: 1.8;
+      margin-bottom: 40px;
+    }
+
+    /* ── Footer ──────────────────────────────────────────────── */
+
+    footer {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 36px 40px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .footer-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 0.12em;
+      color: var(--text-3);
+    }
+
+    .footer-hex {
+      color: var(--amber-dim);
+      margin-right: 8px;
+    }
+
+    .footer-org {
+      font-size: 11px;
+      color: var(--text-3);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      margin-left: auto;
+      list-style: none;
+    }
+
+    .footer-links a {
+      font-size: 11px;
+      color: var(--text-3);
+      text-decoration: none;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover { color: var(--amber); }
+
+    /* ── Responsive ─────────────────────────────────────────── */
+
+    @media (max-width: 900px) {
+      .trinity-table { grid-template-columns: 1fr; }
+      .trinity-col { border-right: none; border-bottom: 1px solid var(--border); }
+      .trinity-col:last-child { border-bottom: none; }
+      .examples-strip { grid-template-columns: 1fr; }
+      .tradeoff-grid { grid-template-columns: 1fr; }
+      nav { padding: 0 20px; gap: 16px; }
+      .nav-links { gap: 16px; }
+      section { padding: 70px 20px; }
+    }
+
+    @media (max-width: 600px) {
+      .nav-links .hide-mobile { display: none; }
+      .ide-frame-wrap iframe { height: 400px; }
+    }
+
+    /* ── Trinity "Learn More" button ───────────────────────────── */
+
+    .trinity-more-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 18px;
+      padding: 7px 14px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: transparent;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .trinity-col.bija  .trinity-more-btn { color: var(--amber-lt); border: 1px solid var(--amber-dim); }
+    .trinity-col.rumus .trinity-more-btn { color: var(--teal);     border: 1px solid var(--teal-dim); }
+    .trinity-col.viesti .trinity-more-btn { color: var(--rust);    border: 1px solid var(--rust-dim); }
+
+    .trinity-col.bija  .trinity-more-btn:hover { background: rgba(217,123,14,0.1); border-color: var(--amber-lt); }
+    .trinity-col.rumus .trinity-more-btn:hover { background: rgba(45,184,176,0.1); border-color: var(--teal); }
+    .trinity-col.viesti .trinity-more-btn:hover { background: rgba(200,72,16,0.1); border-color: var(--rust); }
+
+    .trinity-more-btn .arrow { font-size: 13px; transition: transform 0.15s; }
+    .trinity-more-btn:hover .arrow { transform: translateX(3px); }
+
+    /* ── Modal overlay ─────────────────────────────────────────── */
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(0,0,0,0.82);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      position: relative;
+      background: var(--bg-1);
+      border: 1px solid var(--border-2);
+      border-radius: 4px;
+      max-width: 760px;
+      width: 100%;
+      max-height: 86vh;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(16px) scale(0.98);
+      transition: transform 0.22s ease;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.7);
+    }
+
+    .modal-overlay.open .modal {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 28px 18px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .modal-accent {
+      width: 4px;
+      align-self: stretch;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .modal-header-text { flex: 1; }
+
+    .modal-tag {
+      font-size: 9px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 4px;
+    }
+
+    .modal-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+      letter-spacing: 0.08em;
+      line-height: 1;
+    }
+
+    .modal-meaning {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-top: 3px;
+      font-style: italic;
+    }
+
+    .modal-close {
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--text-3);
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.15s;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .modal-close:hover { border-color: var(--border-2); color: var(--cream); }
+
+    .modal-body {
+      padding: 28px 28px 32px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .modal-body::-webkit-scrollbar { width: 4px; }
+    .modal-body::-webkit-scrollbar-track { background: transparent; }
+    .modal-body::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+
+    .modal-section {
+      margin-bottom: 28px;
+    }
+
+    .modal-section:last-child { margin-bottom: 0; }
+
+    .modal-section-title {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .modal-prose {
+      font-size: 14px;
+      color: var(--text-2);
+      line-height: 1.85;
+    }
+
+    .modal-prose strong { color: var(--cream); font-weight: 500; }
+    .modal-prose code {
+      background: var(--bg-3);
+      color: var(--amber-lt);
+      padding: 1px 5px;
+      border-radius: 2px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    .modal-prose p + p { margin-top: 14px; }
+
+    .modal-invariants {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .modal-invariant {
+      display: flex;
+      gap: 14px;
+      padding: 14px 16px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+    }
+
+    .modal-inv-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      color: var(--text-3);
+      flex-shrink: 0;
+      padding-top: 2px;
+      min-width: 46px;
+    }
+
+    .modal-inv-text {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.65;
+    }
+
+    .modal-inv-text strong { color: var(--cream); font-weight: 500; }
+
+    /* Spec PDF modal — wider, doc-style */
+    #modal-spec .modal { max-width: 880px; }
+
+    .spec-toc {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+
+    .spec-toc-item {
+      padding: 5px 12px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      font-size: 11px;
+      color: var(--text-3);
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: transparent;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .spec-toc-item:hover { border-color: var(--amber-dim); color: var(--amber-lt); }
+
+    .spec-section {
+      scroll-margin-top: 20px;
+    }
+
+    .spec-rule-box {
+      margin: 16px 0;
+      padding: 14px 18px;
+      background: var(--bg-3);
+      border-left: 3px solid var(--amber-dim);
+      font-size: 13px;
+      color: var(--cream);
+      font-style: italic;
+      line-height: 1.7;
+    }
+
+    .spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin: 14px 0;
+    }
+
+    .spec-table th {
+      text-align: left;
+      padding: 8px 12px;
+      background: var(--bg-3);
+      color: var(--text-3);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .spec-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-2);
+      vertical-align: top;
+    }
+
+    .spec-table td:first-child {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--amber-lt);
+      white-space: nowrap;
+    }
+
+    .spec-table tr:last-child td { border-bottom: none; }
+
+    .spec-section pre {
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      padding: 12px 16px;
+      border-radius: 2px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--cream);
+      overflow-x: auto;
+      line-height: 1.6;
+      margin: 14px 0;
+    }
+
+  </style>
+</head>
+<body>
+
+<!-- ── Navigation ─────────────────────────────────────────────────────────── -->
+<nav>
+  <a href="#" class="nav-logo">
+    <span class="nav-hex">⬡</span>
+    <span class="nav-wordmark">Fudgel</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#trinity" class="hide-mobile">The Trinity</a></li>
+    <li><a href="#demo" class="hide-mobile">Try It</a></li>
+    <li><a href="#architecture" class="hide-mobile">Architecture</a></li>
+    <li><a href="#libraries" class="hide-mobile">Libraries</a></li>
+    <li><a href="#" class="nav-cta" onclick="openModal('modal-spec');return false;">Spec PDF</a></li>
+  </ul>
+</nav>
+
+<!-- ── Hero ───────────────────────────────────────────────────────────────── -->
+<section id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="geo geo-1"></div>
+  <div class="geo geo-2"></div>
+  <div class="geo geo-3"></div>
+  <div class="geo geo-4"></div>
+  <div class="geo geo-5"></div>
+
+  <div class="hero-inner">
+    <div class="hero-label">ProtoSpeech Foundation — v3.0 Draft</div>
+    <h1 class="hero-title">FUDGEL</h1>
+    <p class="hero-sub">A Meta-Language of Intent</p>
+    <p class="hero-desc">
+      Three sub-languages. One job each. <em>No intermediate abstraction layer.</em>
+      Bija stores state. Rumus computes. Viesti routes. Everything else is a library.
+      The source structure is the execution structure.
+    </p>
+    <div class="hero-actions">
+      <a href="#demo" class="btn btn-primary">Try in Browser &darr;</a>
+      <a href="#trinity" class="btn btn-secondary">Read the Architecture</a>
+    </div>
+  </div>
+
+  <div class="hero-scroll">Scroll</div>
+</section>
+
+<!-- ── The Trinity ─────────────────────────────────────────────────────────── -->
+<section id="trinity">
+  <div class="section-inner">
+    <div class="section-tag">The Foundation</div>
+    <h2 class="section-title reveal">The <span>Trinity</span></h2>
+    <p class="section-lead reveal">
+      Fudgel is composed of exactly three sub-languages, each with a single responsibility.
+      No sub-language can perform the role of another. This separation is enforced by syntax,
+      not convention.
+    </p>
+
+    <div class="trinity-table reveal">
+      <div class="trinity-col bija">
+        <div class="trinity-tag">Sub-language 01</div>
+        <div class="trinity-name">Bija</div>
+        <div class="trinity-meaning">seed / origin</div>
+        <p class="trinity-desc">
+          The entire heap. All state lives here — entities, properties, templates, instances.
+          Fully resolved at load time. Every human-readable name becomes a fixed memory address.
+          No logic, no operations, no expressions. Pure structure.
+        </p>
+        <p class="trinity-rule">Cannot: execute logic &nbsp;·&nbsp; route data</p>
+        <button class="trinity-more-btn" onclick="openModal('modal-bija')">Deep dive <span class="arrow">→</span></button>
+      </div>
+      <div class="trinity-col rumus">
+        <div class="trinity-tag">Sub-language 02</div>
+        <div class="trinity-name">Rumus</div>
+        <div class="trinity-meaning">formula</div>
+        <p class="trinity-desc">
+          Pure, finite functions operating exclusively in registers. Receives inputs, computes
+          outputs, terminates. No heap allocation, no side effects, no back-edges. Every function
+          is provably finite. Register scaffolding, not heap state.
+        </p>
+        <p class="trinity-rule">Cannot: store state &nbsp;·&nbsp; route data</p>
+        <button class="trinity-more-btn" onclick="openModal('modal-rumus')">Deep dive <span class="arrow">→</span></button>
+      </div>
+      <div class="trinity-col viesti">
+        <div class="trinity-tag">Sub-language 03</div>
+        <div class="trinity-name">Viesti</div>
+        <div class="trinity-meaning">message / signal</div>
+        <p class="trinity-desc">
+          The wiring layer. Connects Bija addresses to Rumus functions and writes results back.
+          A signal resolves when its source address has data. One tilde between two addresses is
+          the complete syntax. No logic, no time, no conditionals.
+        </p>
+        <p class="trinity-rule">Cannot: store state &nbsp;·&nbsp; execute logic</p>
+        <button class="trinity-more-btn" onclick="openModal('modal-viesti')">Deep dive <span class="arrow">→</span></button>
+      </div>
+    </div>
+
+    <div class="examples-strip reveal">
+      <!-- Bija example -->
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dot bija"></div>
+          <span class="code-lang">Bija — state</span>
+        </div>
+        <div class="code-body"><span class="kw">@Bija</span>
+<span class="kw">@Ehto</span>
+
+<span class="ent">TemplateWeapon</span>;
+    <span class="prop">damage</span>: <span class="val">0</span>
+    <span class="prop">speed</span>:  <span class="val">1</span>
+
+<span class="ent">Player</span>;
+    <span class="prop">name</span>:   <span class="val">Arin</span>
+    <span class="prop">health</span>: <span class="val">100</span> <span class="meta">{required}</span>
+    <span class="prop">maxHP</span>:  <span class="ref">=Config.maxHealth</span>
+
+<span class="ent">Sword</span>: <span class="ref">#TemplateWeapon</span> <span class="op">| 28, 3 |</span>
+
+<span class="ent">Wave</span>;
+    <span class="prop">minions</span>: <span class="ref">#Enemy</span> <span class="op">!5</span></div>
+      </div>
+
+      <!-- Rumus example -->
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dot rumus"></div>
+          <span class="code-lang">Rumus — logic</span>
+        </div>
+        <div class="code-body"><span class="kw">@Rumus</span>
+
+<span class="op">?</span> <span class="fn">clamp</span><span class="meta">{x, min, max}</span>;
+    <span class="prop">belowMin</span>: <span class="prop">x</span> <span class="op">&lt;</span> <span class="prop">min</span> <span class="op">?</span> <span class="prop">min</span> <span class="op">:</span> <span class="prop">x</span>
+    <span class="prop">result</span>: <span class="prop">belowMin</span> <span class="op">&gt;</span> <span class="prop">max</span> <span class="op">?</span> <span class="prop">max</span> <span class="op">:</span> <span class="prop">belowMin</span>
+    <span class="sig">~result</span>
+
+<span class="op">?</span> <span class="fn">calcDamage</span><span class="meta">{base, boost, roll}</span>;
+    <span class="prop">hit</span>:   <span class="prop">roll</span> <span class="op">&gt;=</span> <span class="val">40</span> <span class="op">?</span> <span class="val">1</span> <span class="op">:</span> <span class="val">0</span>
+    <span class="prop">total</span>: <span class="prop">hit</span> <span class="op">*</span> <span class="op">(</span><span class="prop">base</span> <span class="op">+</span> <span class="prop">boost</span><span class="op">)</span>
+    <span class="sig">~total</span></div>
+      </div>
+
+      <!-- Viesti example -->
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dot viesti"></div>
+          <span class="code-lang">Viesti — routing</span>
+        </div>
+        <div class="code-body"><span class="kw">@Viesti</span>
+
+<span class="cmt">(── Single-line shorthand ─────────)</span>
+<span class="ref">Player.health</span> <span class="sig">~</span> <span class="fn">clamp</span> <span class="sig">~</span> <span class="ref">Player.health</span>
+
+<span class="cmt">(── Multi-input function ──────────)</span>
+<span class="ref">Hero.attack</span>   <span class="sig">~</span> <span class="ref">calcDamage.base</span>
+<span class="ref">Hero.upgrade</span>  <span class="sig">~</span> <span class="ref">calcDamage.boost</span>
+<span class="ref">Roll.value</span>    <span class="sig">~</span> <span class="ref">calcDamage.roll</span>
+<span class="ref">calcDamage</span>    <span class="sig">~</span> <span class="ref">Enemy.health</span>
+
+<span class="cmt">(── Dormant signal ───────────────)</span>
+<span class="ref">Player.health</span> <span class="sig">~</span> <span class="fn">checkCritical</span> <span class="sig">~</span></div>
+      </div>
+    </div>
+
+    <div class="tradeoff-pull reveal">
+      "If you need logic, write a Rumus function. If you need to remember something, write it to a Bija entity. Viesti connects the two. Nothing else exists."
+    </div>
+
+  </div>
+</section>
+
+<!-- ── The False Tradeoff ──────────────────────────────────────────────────── -->
+<section id="tradeoff">
+  <div class="section-inner">
+    <div class="tradeoff-grid">
+      <div>
+        <div class="section-tag">Design Philosophy</div>
+        <h2 class="section-title reveal">The<br><span>False</span><br>Tradeoff</h2>
+        <div class="tradeoff-manifesto reveal">
+          <p>Language design has historically operated on an assumed spectrum:
+          <strong>human-readable on one end, machine-efficient on the other.</strong></p>
+          <br>
+          <p>Every position on that spectrum is a compromise that leans one way
+          and pretends it doesn't.</p>
+          <br>
+          <p>Fudgel's claim is that <strong>this tradeoff is false.</strong> A sufficiently honest
+          representation of intent is also a sufficient representation for direct compilation —
+          because intent at the right level of granularity is <strong>exactly what the machine needs.</strong></p>
+          <br>
+          <p>The difficulty of assembly is not conceptual complexity — it is notational friction.
+          Fudgel removes the friction <strong>without adding an abstraction layer,</strong>
+          because the abstraction layer is what introduces the translation cost.</p>
+        </div>
+      </div>
+      <div>
+        <div class="axioms reveal">
+          <div class="axiom">
+            <div class="axiom-num">01</div>
+            <div class="axiom-text">
+              <strong>Deterministic by construction</strong>
+              Same input state always produces the same output. Not a property you engineer —
+              a guarantee that falls out of the architecture.
+            </div>
+          </div>
+          <div class="axiom">
+            <div class="axiom-num">02</div>
+            <div class="axiom-text">
+              <strong>No GC. No heap allocation in functions.</strong>
+              Rumus functions operate exclusively in registers. When a function returns,
+              every intermediate value is gone. Garbage collection is an inapplicable concept.
+            </div>
+          </div>
+          <div class="axiom">
+            <div class="axiom-num">03</div>
+            <div class="axiom-text">
+              <strong>No hidden control flow</strong>
+              Every data dependency is a declared Viesti edge. Every iteration is a
+              visible cycle in the graph. No implicit state, no framework magic.
+            </div>
+          </div>
+          <div class="axiom">
+            <div class="axiom-num">04</div>
+            <div class="axiom-text">
+              <strong>The source is the execution graph</strong>
+              No compiler transforms the structure before it runs. What you read
+              is what the runtime executes. Bija is the heap. Viesti is the schedule.
+            </div>
+          </div>
+          <div class="axiom">
+            <div class="axiom-num">05</div>
+            <div class="axiom-text">
+              <strong>Libraries are inherently open</strong>
+              A library is Fudgel source. There is no compiled binary to distribute.
+              The source is the library. The ecosystem is structurally open source
+              whether or not that was anyone's explicit intention.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Live Demo ───────────────────────────────────────────────────────────── -->
+<section id="demo">
+  <div class="section-inner">
+    <div class="section-tag" style="justify-content:center">Interactive</div>
+    <h2 class="section-title reveal" style="text-align:center">Try <span>Fudgel</span> Now</h2>
+    <p class="section-lead reveal" style="margin:0 auto 48px;text-align:center">
+      A live parser and visual schema renderer running entirely in your browser.
+      Edit Bija, Rumus, or Viesti and watch the graph update in real time.
+      No installation. No build step.
+    </p>
+
+    <div class="demo-preview reveal">
+      <div class="demo-preview-bar">
+        <div class="frame-dot r"></div>
+        <div class="frame-dot y"></div>
+        <div class="frame-dot g"></div>
+        <span class="frame-title">Fudgel IDE — fudgel.org</span>
+      </div>
+      <div class="demo-screenshot">
+        <div class="demo-pane">
+          <div class="demo-pane-label">Editor</div>
+          <div class="demo-pane-code"><span class="kw">@Bija</span>
+<span class="kw">@Ehto</span>
+
+<span class="ent">Player</span>;
+    <span class="prop">name</span>:   <span class="val">Arin</span>
+    <span class="prop">health</span>: <span class="val">100</span> <span class="meta">{required}</span>
+    <span class="prop">mana</span>:   <span class="val">60</span>  <span class="meta">{required}</span>
+
+<span class="ent">Config</span>;
+    <span class="prop">maxHealth</span>: <span class="val">200</span> <span class="meta">{immutable}</span>
+
+<span class="ent">Boss</span>;
+    <span class="prop">health</span>: <span class="val">160</span>
+    <span class="prop">phase</span>:  <span class="val">1</span>
+
+<span class="kw">@Rumus</span>
+
+<span class="op">?</span> <span class="fn">clamp</span><span class="meta">{x, min, max}</span>;
+    <span class="prop">lo</span>: <span class="prop">x</span> <span class="op">&lt;</span> <span class="prop">min</span> <span class="op">?</span> <span class="prop">min</span> <span class="op">:</span> <span class="prop">x</span>
+    <span class="prop">result</span>: <span class="prop">lo</span> <span class="op">&gt;</span> <span class="prop">max</span> <span class="op">?</span> <span class="prop">max</span> <span class="op">:</span> <span class="prop">lo</span>
+    <span class="sig">~result</span>
+
+<span class="kw">@Viesti</span>
+
+<span class="ref">Player.health</span> <span class="sig">~</span> <span class="fn">clamp</span> <span class="sig">~</span> <span class="ref">Player.health</span></div>
+        </div>
+        <div class="demo-pane">
+          <div class="demo-pane-label">Expanded Bija</div>
+          <div class="demo-pane-code"><span class="cmt">@Bija</span>
+
+<span class="ent">Player</span>;
+  <span class="prop">name</span>: <span class="val">Arin</span>
+  <span class="prop">health</span>: <span class="val">100</span>
+    <span class="prop">required</span>: <span class="val">true</span>
+  <span class="prop">mana</span>: <span class="val">60</span>
+    <span class="prop">required</span>: <span class="val">true</span>
+
+<span class="ent">Config</span>;
+  <span class="prop">maxHealth</span>: <span class="val">200</span>
+    <span class="prop">immutable</span>: <span class="val">true</span>
+
+<span class="ent">Boss</span>;
+  <span class="prop">health</span>: <span class="val">160</span>
+  <span class="prop">phase</span>: <span class="val">1</span>
+
+<span class="cmt">@Rumus</span>
+
+<span class="fn">clamp</span>;
+  <span class="prop">x</span>: <span class="val">true</span>
+  <span class="prop">min</span>: <span class="val">true</span>
+  <span class="prop">max</span>: <span class="val">true</span></div>
+        </div>
+        <div class="demo-pane">
+          <div class="demo-pane-label">Visual Schema</div>
+          <div class="demo-pane-code" style="padding:12px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;white-space:normal">
+            <div style="display:inline-flex;flex-direction:column;gap:4px;padding:10px 14px;background:#1a1005;border:1px solid #6b4515;border-radius:3px;font-size:11px;min-width:90px">
+              <span style="color:#f5ce6e;font-weight:600;letter-spacing:0.05em">Player</span>
+              <span style="color:#6dc9c0">name: <span style="color:#d4a06a">Arin</span></span>
+              <span style="color:#6dc9c0">health: <span style="color:#d4a06a">100</span></span>
+              <span style="color:#6dc9c0">mana: <span style="color:#d4a06a">60</span></span>
+            </div>
+            <div style="display:inline-flex;flex-direction:column;gap:4px;padding:10px 14px;background:#041420;border:1px solid #1a6090;border-radius:3px;font-size:11px;min-width:90px">
+              <span style="color:#50c8f0;font-weight:600;letter-spacing:0.05em">? clamp</span>
+              <span style="color:#5090b8">x: true</span>
+              <span style="color:#5090b8">min: true</span>
+              <span style="color:#5090b8">max: true</span>
+              <span style="color:#2db8b0;margin-top:2px">~result</span>
+            </div>
+            <div style="display:inline-flex;flex-direction:column;gap:4px;padding:10px 14px;background:#1a1005;border:1px solid #6b4515;border-radius:3px;font-size:11px;min-width:90px">
+              <span style="color:#f5ce6e;font-weight:600;letter-spacing:0.05em">Config</span>
+              <span style="color:#6dc9c0">maxHealth: <span style="color:#d4a06a">200</span></span>
+            </div>
+            <div style="display:inline-flex;flex-direction:column;gap:4px;padding:10px 14px;background:#1a1005;border:1px solid #6b4515;border-radius:3px;font-size:11px;min-width:90px">
+              <span style="color:#f5ce6e;font-weight:600;letter-spacing:0.05em">Boss</span>
+              <span style="color:#6dc9c0">health: <span style="color:#d4a06a">160</span></span>
+              <span style="color:#6dc9c0">phase: <span style="color:#d4a06a">1</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="demo-overlay">
+        <a href="ide.html" class="demo-open-btn">
+          <div class="demo-open-pill">
+            <span>Open the IDE</span>
+            <span class="demo-open-arrow">&#8599;</span>
+          </div>
+          <span class="demo-open-note">Opens in this tab &nbsp;·&nbsp; no install required</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Architecture Invariants ─────────────────────────────────────────────── -->
+<section id="architecture">
+  <div class="section-inner">
+    <div class="section-tag">Guarantees</div>
+    <h2 class="section-title reveal">Architectural<br><span>Invariants</span></h2>
+    <p class="section-lead reveal">
+      These are not conventions. A Fudgel compiler must reject any application that violates
+      a compiler-enforceable invariant.
+    </p>
+
+    <div class="invariants-grid reveal">
+      <div class="invariant bj">
+        <div class="invariant-code">BJ-01</div>
+        <p><strong>All shorthand resolves at parse time.</strong>
+        Commas, <code>!</code> multipliers, positional pipes, boolean metadata —
+        none survive into the PAF. The runtime sees only expanded entities.</p>
+      </div>
+      <div class="invariant bj">
+        <div class="invariant-code">BJ-06</div>
+        <p><strong>Only Viesti writes to Bija at runtime.</strong>
+        No other mechanism can mutate state. Every state change is
+        a named, visible signal in the graph.</p>
+      </div>
+      <div class="invariant rm">
+        <div class="invariant-code">RM-01</div>
+        <p><strong>Every Rumus function is finite.</strong>
+        No direct recursion. No cycles in the call graph. Turing-completeness
+        requires an explicit, visible Viesti cycle — never hidden inside a function.</p>
+      </div>
+      <div class="invariant rm">
+        <div class="invariant-code">RM-09</div>
+        <p><strong>No compiler optimisation pass.</strong>
+        The compiler translates honestly. Performance is a product of design quality.
+        A slow program is a design problem, visible in the structure.</p>
+      </div>
+      <div class="invariant vi">
+        <div class="invariant-code">VI-01</div>
+        <p><strong>Signal order is execution order.</strong>
+        Viesti signals resolve in the order they are written. Writing signals is
+        simultaneously writing the execution schedule.</p>
+      </div>
+      <div class="invariant vi">
+        <div class="invariant-code">VI-07</div>
+        <p><strong>Viesti has no concept of time.</strong>
+        Timing, animation, and recurring execution are exclusively Lifga
+        library concerns. The core has no run loop, no frame tick.</p>
+      </div>
+      <div class="invariant ar">
+        <div class="invariant-code">AR-01</div>
+        <p><strong>No layer knows another layer exists.</strong>
+        Bija does not know Rumus exists. Rumus does not know Viesti exists.
+        Libraries do not know other libraries exist.</p>
+      </div>
+      <div class="invariant ar">
+        <div class="invariant-code">AR-07</div>
+        <p><strong>Deterministic by construction.</strong>
+        Non-determinism can only be introduced explicitly through a library —
+        always an explicit choice, never an accidental one.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Standard Libraries ─────────────────────────────────────────────────── -->
+<section id="libraries">
+  <div class="section-inner">
+    <div class="section-tag">Ecosystem</div>
+    <h2 class="section-title reveal">Standard<br><span>Libraries</span></h2>
+    <p class="section-lead reveal">
+      Domain-specific semantic abstractions that compile directly to Bija entities, Rumus functions,
+      and Viesti signals. No special compiler access. No runtime overhead beyond what their compiled
+      output requires. Libraries are inherently open — source is the only distributable.
+    </p>
+
+    <div class="lib-groups reveal">
+
+      <!-- Compilation Pass -->
+      <div class="lib-group">
+        <div class="lib-group-header">
+          <div class="lib-group-bar compilation"></div>
+          <div class="lib-group-label compilation">Compilation Pass</div>
+          <div class="lib-group-note">Run before PAF emission — errors here are compiler errors, not runtime exceptions</div>
+        </div>
+        <div class="lib-grid">
+          <div class="lib-card foundational compilation">
+            <div class="lib-badge">Foundational</div>
+            <div class="lib-name">Ehto</div>
+            <div class="lib-meaning">Constraint</div>
+            <p class="lib-desc">Structural constraint validation. Reads boolean metadata on Bija entities and validates shape. Reference implementation for the compilation pass pattern.</p>
+          </div>
+          <div class="lib-card foundational compilation">
+            <div class="lib-badge">Foundational</div>
+            <div class="lib-name">Primi</div>
+            <div class="lib-meaning">First / Memory</div>
+            <p class="lib-desc">Memory and range validation. Provides primitive type constraints through metadata booleans. {int}, {float32}, and custom constraints.</p>
+          </div>
+          <div class="lib-card foundational compilation">
+            <div class="lib-badge">Foundational</div>
+            <div class="lib-name">Peril</div>
+            <div class="lib-meaning">Peril / Verify</div>
+            <p class="lib-desc">Parallelism verification. Proves ~~ independence claims at compile time by running each pool in both orderings and comparing outputs. Optional — but every ~~ it passes is proven, not asserted.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual Stack -->
+      <div class="lib-group">
+        <div class="lib-group-header">
+          <div class="lib-group-bar visual"></div>
+          <div class="lib-group-label visual">Visual Stack</div>
+          <div class="lib-group-note">Kadro → Smink → Pismo → Aquilla · each a distinct pass, each independently replaceable</div>
+        </div>
+        <div class="lib-grid">
+          <div class="lib-card visual">
+            <div class="lib-name">Kadro</div>
+            <div class="lib-meaning">Frame / Layout</div>
+            <p class="lib-desc">Where and how big. Pure spatial arithmetic on CPU — resolves layout before any rendering pass begins.</p>
+          </div>
+          <div class="lib-card visual">
+            <div class="lib-name">Smink</div>
+            <div class="lib-meaning">Makeup / Style</div>
+            <p class="lib-desc">What does it look like. Property resolution over the entity tree — colours, borders, effects applied as a pass over Kadro-resolved entities.</p>
+          </div>
+          <div class="lib-card visual">
+            <div class="lib-name">Pismo</div>
+            <div class="lib-meaning">Font / Type</div>
+            <p class="lib-desc">Text formatting and typography. Applies font metrics and shaping over Kadro layout entities as a dedicated pass.</p>
+          </div>
+          <div class="lib-card visual">
+            <div class="lib-name">Aquilla</div>
+            <div class="lib-meaning">Eagle / Render</div>
+            <p class="lib-desc">What is visible and in what order. Compositing pass — produces a resolved list of rectangular regions written directly to the framebuffer. Invalidation-based: zero CPU when nothing changes.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Runtime & I/O -->
+      <div class="lib-group">
+        <div class="lib-group-header">
+          <div class="lib-group-bar runtime"></div>
+          <div class="lib-group-label runtime">Runtime &amp; I/O</div>
+          <div class="lib-group-note">External systems, timing, and dynamic allocation</div>
+        </div>
+        <div class="lib-grid">
+          <div class="lib-card runtime">
+            <div class="lib-name">Lifga</div>
+            <div class="lib-meaning">Revive / Timing</div>
+            <p class="lib-desc">The only library that introduces time. Writes to Bija entities on a schedule, triggering downstream signals naturally. Viesti never knows time exists.</p>
+          </div>
+          <div class="lib-card runtime">
+            <div class="lib-name">Rezo</div>
+            <div class="lib-meaning">Network</div>
+            <p class="lib-desc">High-performance network handling. External system interactions that may leave Bija addresses unpopulated — the graph stays inert, not hung.</p>
+          </div>
+          <div class="lib-card runtime">
+            <div class="lib-name">Zapis</div>
+            <div class="lib-meaning">Record / I/O</div>
+            <p class="lib-desc">File system and database I/O. Session persistence. Translates between external systems and Bija entity state.</p>
+          </div>
+          <div class="lib-card runtime">
+            <div class="lib-name">Nësen</div>
+            <div class="lib-meaning">Nest / Dynamic</div>
+            <p class="lib-desc">Dynamic entity allocation at runtime. Operates in a separate memory pool outside PAF space — PAF and Nësen addresses are unambiguously distinct, no type tag needed.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Application -->
+      <div class="lib-group">
+        <div class="lib-group-header">
+          <div class="lib-group-bar application"></div>
+          <div class="lib-group-label application">Application</div>
+          <div class="lib-group-note">Input, audio, security, and data handling</div>
+        </div>
+        <div class="lib-grid">
+          <div class="lib-card application">
+            <div class="lib-name">Tipus</div>
+            <div class="lib-meaning">User Input</div>
+            <p class="lib-desc">Keyboard, pointer, touch, and gamepad input handling routed as Bija state updates.</p>
+          </div>
+          <div class="lib-card application">
+            <div class="lib-name">Kani</div>
+            <div class="lib-meaning">Sound / Audio</div>
+            <p class="lib-desc">Audio processing and playback. Sound state lives in Bija; Kani functions translate it to hardware output.</p>
+          </div>
+          <div class="lib-card application">
+            <div class="lib-name">Cead</div>
+            <div class="lib-meaning">Permission</div>
+            <p class="lib-desc">User access control and security. Permission state lives in Bija entities; Cead validates it during the compilation pass and at signal routing boundaries.</p>
+          </div>
+          <div class="lib-card application">
+            <div class="lib-name">Drysu</div>
+            <div class="lib-meaning">Tangled / Crypto</div>
+            <p class="lib-desc">Encryption and cryptographic safety. Non-determinism is an explicit, declared opt-in through this library.</p>
+          </div>
+          <div class="lib-card application">
+            <div class="lib-name">Nyem</div>
+            <div class="lib-meaning">Squeeze / Compress</div>
+            <p class="lib-desc">Compression and storage optimisation. Operates on Bija entity data as a pass — source representation unchanged, only the emitted binary is affected.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Polishing -->
+      <div class="lib-group">
+        <div class="lib-group-header">
+          <div class="lib-group-bar polishing"></div>
+          <div class="lib-group-label polishing">Localisation &amp; Accessibility</div>
+          <div class="lib-group-note">Meaning layers applied as separate entity-tree passes</div>
+        </div>
+        <div class="lib-grid">
+          <div class="lib-card polishing">
+            <div class="lib-name">Giya</div>
+            <div class="lib-meaning">Guidance / A11y</div>
+            <p class="lib-desc">Accessibility and semantic markers. Describes meaning for assistive technologies as a separate pass over the entity tree.</p>
+          </div>
+          <div class="lib-card polishing">
+            <div class="lib-name">Hloov</div>
+            <div class="lib-meaning">Change / L10n</div>
+            <p class="lib-desc">Translation and localisation. String resolution from locale tables as a Bija entity pass — no special runtime machinery required.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div style="margin-top:32px;text-align:center">
+      <button class="btn btn-secondary" onclick="openModal('modal-libraries')" style="font-size:12px">Library Ecosystem Deep Dive <span style="margin-left:4px">→</span></button>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ─────────────────────────────────────────────────────────────────── -->
+<section id="cta">
+  <div class="cta-hex-grid"></div>
+  <div class="cta-inner">
+    <div class="section-tag" style="justify-content:center">ProtoSpeech Foundation</div>
+    <h2 class="cta-title reveal">READ<br>THE<br>SPEC</h2>
+    <p class="cta-sub reveal">
+      The full architecture specification covers the PAF binary format, the IDE design,
+      the compilation pipeline, and every invariant the compiler must enforce.
+      v3.0 draft — live document.
+    </p>
+    <div class="hero-actions reveal">
+      <a href="#demo" class="btn btn-primary">Try in Browser</a>
+      <a href="https://fudgel.org" class="btn btn-secondary">fudgel.org &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ─────────────────────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-logo">
+    <span class="footer-hex">⬡</span>Fudgel
+  </div>
+  <div class="footer-org">ProtoSpeech Foundation · fudgel.org</div>
+  <ul class="footer-links">
+    <li><a href="#trinity">Trinity</a></li>
+    <li><a href="#demo">IDE</a></li>
+    <li><a href="#libraries">Libraries</a></li>
+    <li><a href="https://fudgel.org">Spec</a></li>
+  </ul>
+</footer>
+
+
+<!-- ── MODAL: Bija ──────────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="modal-bija" onclick="closeModalOnOverlay(event, 'modal-bija')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-accent" style="background:var(--amber)"></div>
+      <div class="modal-header-text">
+        <div class="modal-tag">Sub-language 01 — State Layer</div>
+        <div class="modal-title" style="color:var(--amber-lt)">Bija</div>
+        <div class="modal-meaning">seed / origin</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-bija')">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="modal-section">
+        <div class="modal-section-title">Purpose</div>
+        <div class="modal-prose">
+          <p>Bija is <strong>the entire heap</strong> of a Fudgel application. It is the only place where state persists across function calls. All Rumus functions read from and write to Bija entities via Viesti signals.</p>
+          <p>At runtime, every human-readable name in a Bija file is discarded. The load-time pass assigns each entity and property a <strong>fixed memory offset</strong>. All subsequent references become raw pointer arithmetic.</p>
+          <p>The key distinction from general data formats like JSON is that Bija describes not just what exists, but <strong>how to derive everything else from it</strong> — purely through structure. Templates, instantiation, the multiplier, and positional overrides are all declarative derivations that resolve at parse time with no runtime cost.</p>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Core Rules</div>
+        <div class="modal-prose">
+          <p>Everything is entities and properties. Every property has exactly one value. Indentation denotes hierarchy. The parser has no type system, no logic, and no operations.</p>
+          <p><strong>Values are always atomic.</strong> <code>damage: #attack + 20</code> is a syntax error — Bija has no operators. If a value must be derived, that computation belongs in Rumus, and the result is written back to Bija by a Viesti signal.</p>
+          <p><strong>All shorthand resolves at parse time.</strong> Commas, <code>!</code> multipliers, positional pipes, boolean metadata — nothing from shorthand syntax survives into the PAF. The runtime sees only the fully expanded result.</p>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Syntax Features</div>
+        <div class="modal-prose">
+          <p><strong>References (<code>#</code>):</strong> A semantic alias — the compiler resolves it to the same address as the target and removes the reference. No indirection survives. Distinct from <code>=</code> (value equivalence), which copies the value at parse time and forgets the source.</p>
+          <p><strong>Templates &amp; Instantiation:</strong> <code>NewThing: #TemplateName</code> copies the referenced entity's full structure at parse time. Not a link — the copy is fully independent. Combine with positional overrides: <code>Sword: #TemplateItem | 15, 3 |</code>.</p>
+          <p><strong>Multiplier (<code>!</code>):</strong> <code>enemies: #Enemy !5</code> stamps out five fully independent instances at parse time, addressable as <code>#enemies.0</code> through <code>#enemies.4</code>. Combinable with positional shorthand for homogeneous sets: <code>wave: #Enemy !5 | 200, aggressive |</code>.</p>
+          <p><strong>Anonymous lists:</strong> The <code>-</code> marker creates an ordered list (numbered sub-entities, addressable by index). The <code>*</code> marker creates an unordered set (named sub-entities with <code>empty</code> values — the names are the data). Both resolve entirely at parse time.</p>
+          <p><strong>Empty value:</strong> <code>propertyName: empty</code> is an explicit declaration. A property with no value is not null — it is empty by declaration. No inference occurs.</p>
+          <p><strong>Metadata booleans (<code>{}</code>):</strong> <code>health: 100 {required, immutable}</code> expands to boolean sub-entities. Bija does not know what <code>required</code> or <code>immutable</code> mean — meaning is supplied entirely by the library that reads them during the compilation pass. There are no privileged metadata keywords.</p>
+          <p><strong>Literals:</strong> <code>propertyName: [literal text that may span multiple lines]</code> — no parsing occurs inside square brackets.</p>
+          <p><strong>File types — defined by imports:</strong></p>
+        </div>
+        <table class="spec-table" style="margin-top:8px;margin-bottom:14px">
+          <thead><tr><th>File Type</th><th>Required Imports</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>Application</td><td><code>@Bija @Rumus @Viesti</code></td><td>Complete executable. First signal under @Viesti is the entry point.</td></tr>
+            <tr><td>Library</td><td><code>@Bija @Rumus</code></td><td>Templates and functions. No @Viesti — wiring is the consumer's concern.</td></tr>
+            <tr><td>Data file</td><td><code>@Bija</code></td><td>Pure state declaration. No logic, no signals.</td></tr>
+          </tbody>
+        </table>
+        <div class="modal-prose">
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Invariants</div>
+        <div class="modal-invariants">
+          <div class="modal-invariant">
+            <div class="modal-inv-code">BJ-01</div>
+            <div class="modal-inv-text"><strong>All shorthand resolves at parse time.</strong> No shorthand syntax survives into the PAF.</div>
+          </div>
+          <div class="modal-invariant">
+            <div class="modal-inv-code">BJ-02</div>
+            <div class="modal-inv-text"><strong>Values are always atomic.</strong> A value is a literal, a reference, a shorthand token, or <code>empty</code>. Expressions are a syntax error.</div>
+          </div>
+          <div class="modal-invariant">
+            <div class="modal-inv-code">BJ-03</div>
+            <div class="modal-inv-text"><strong>No privileged metadata keywords.</strong> All boolean sub-entities are plain Bija properties. Their meaning belongs exclusively to the library that reads them.</div>
+          </div>
+          <div class="modal-invariant">
+            <div class="modal-inv-code">BJ-06</div>
+            <div class="modal-inv-text"><strong>Only Viesti writes to Bija at runtime.</strong> No other mechanism can mutate state. Every state change is a named, visible signal in the graph.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Rumus ─────────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="modal-rumus" onclick="closeModalOnOverlay(event, 'modal-rumus')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-accent" style="background:var(--teal)"></div>
+      <div class="modal-header-text">
+        <div class="modal-tag">Sub-language 02 — Logic Layer</div>
+        <div class="modal-title" style="color:var(--teal)">Rumus</div>
+        <div class="modal-meaning">formula</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-rumus')">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="modal-section">
+        <div class="modal-section-title">Purpose</div>
+        <div class="modal-prose">
+          <p>Rumus is a <strong>pure transformation notation</strong>. A Rumus function takes named inputs, applies a transformation, exposes outputs. No side effects, no memory allocation, no loops, no branching. Every function is provably finite.</p>
+          <p>Rumus core is <strong>substrate-independent</strong>. It defines the minimum set of operations for Turing completeness with no numeric or hardware assumptions: <em>bind</em> (name a value), <em>apply</em> (pass a value to a function), <em>compose</em> (output feeds the next input), and <em>select</em> (produce one value from multiple candidates). What changes per target is the primitive operation set — the current working target is <code>@rumus-riscv</code>. A file targeting a different substrate imports a different target library. The Rumus functions themselves do not change.</p>
+          <p>There is <strong>no compiler optimisation pass</strong>. Performance is a direct product of design quality. The compiler's job is honest translation, not cleverness.</p>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Standard Operation Set</div>
+        <div class="modal-prose">
+          <p>Five domains are available in any Rumus file without explicit import — the assumed baseline of computation. The <code>@rumus-riscv</code> target library maps these to RISC-V instructions.</p>
+        </div>
+        <table class="spec-table" style="margin-top:12px">
+          <thead><tr><th>Domain</th><th>Operations</th></tr></thead>
+          <tbody>
+            <tr><td>Arithmetic</td><td><code>x + y &nbsp; x - y &nbsp; x * y &nbsp; x / y &nbsp; x % y &nbsp; -x</code></td></tr>
+            <tr><td>Comparison</td><td><code>= &nbsp; != &nbsp; &lt; &nbsp; &gt; &nbsp; &lt;= &nbsp; &gt;=</code> &nbsp; <span style="color:var(--text-3);font-size:11px">(= is equality, not assignment)</span></td></tr>
+            <tr><td>Boolean</td><td><code>a &amp; b &nbsp; a | b &nbsp; !a</code></td></tr>
+            <tr><td>Conditional</td><td><code>a ? b : c</code> — produces a value, not a branch. Expands to a <em>select</em> at emit time.</td></tr>
+            <tr><td>Formal Logic</td><td><code>a -&gt; b &nbsp; a &lt;-&gt; b &nbsp; a ^ b &nbsp; a !&amp; b &nbsp; a !| b &nbsp; a &lt;- b</code> — assertions, not expressions. Halt if violated.</td></tr>
+          </tbody>
+        </table>
+        <div class="modal-prose" style="margin-top:12px">
+          <p>Bitwise operations (<code>&amp; | ^ ~ &gt;&gt; &lt;&lt;</code>) are hardware-specific and belong in a systems target library, not the standard set.</p>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Key Behaviours</div>
+        <div class="modal-prose">
+          <p><strong>No loops.</strong> Rumus contains no loop syntax. Iteration is expressed as an explicit cycle in the Viesti signal graph, making it fully visible and schedulable.</p>
+          <p><strong>Registers only.</strong> Functions operate exclusively in registers. Body property count directly determines register demand. A function body that exceeds available register capacity is undefined behaviour — the emitter does not spill, warn, or fail gracefully. Decompose the function.</p>
+          <p><strong>Formal logic assertions.</strong> Operators like <code>-&gt;</code> (implication) and <code>!&amp;</code> (NAND / mutual exclusion) are not values — they are statements that must hold at function evaluation. Useful for state machines and invariants co-located with the logic they govern. An assertion failure names the function and the specific implication that broke.</p>
+          <p><strong>Function address surface.</strong> The only externally addressable values on a Rumus entity are its parameter addresses and its <code>~</code> output addresses. All body properties are ephemeral and do not exist in the PAF. Viesti may only target these two kinds of addresses on a function entity.</p>
+          <p><strong>Inline vs subroutine.</strong> A function called by a single caller is inlined at emit time. A function called by multiple callers is emitted as a subroutine. This is a <em>determinism guarantee</em> — inlining a function used by multiple callers would create independent register state at each site.</p>
+          <p><strong><code>#</code> inside Rumus is Viesti shorthand.</strong> A <code>#Config.scaleFactor</code> reference inside a function body is expanded at compile time to a compiler-generated Viesti signal that feeds the value as a new parameter. Rumus never reads Bija directly at runtime.</p>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Invariants</div>
+        <div class="modal-invariants">
+          <div class="modal-invariant">
+            <div class="modal-inv-code">RM-01</div>
+            <div class="modal-inv-text"><strong>Every Rumus function is finite.</strong> No direct recursion, no cycles in the call graph.</div>
+          </div>
+          <div class="modal-invariant">
+            <div class="modal-inv-code">RM-02</div>
+            <div class="modal-inv-text"><strong>No writes to Bija.</strong> All persistent outputs are routed via Viesti signals.</div>
+          </div>
+          <div class="modal-invariant">
+            <div class="modal-inv-code">RM-06</div>
+            <div class="modal-inv-text"><strong><code>#</code> always expands to a Viesti signal at compile time.</strong> Rumus never reads Bija directly at runtime.</div>
+          </div>
+          <div class="modal-invariant">
+            <div class="modal-inv-code">RM-08</div>
+            <div class="modal-inv-text"><strong>Body properties are discarded at emit time</strong> and become positional register slots. A function body exceeding available register capacity is undefined behaviour — decompose it.</div>
+          </div>
+          <div class="modal-invariant">
+            <div class="modal-inv-code">RM-09</div>
+            <div class="modal-inv-text"><strong>No compiler optimisation pass.</strong> The compiler translates honestly. Performance is a product of design quality.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Viesti ────────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="modal-viesti" onclick="closeModalOnOverlay(event, 'modal-viesti')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-accent" style="background:var(--rust)"></div>
+      <div class="modal-header-text">
+        <div class="modal-tag">Sub-language 03 — Routing Layer</div>
+        <div class="modal-title" style="color:var(--rust)">Viesti</div>
+        <div class="modal-meaning">message / signal</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-viesti')">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="modal-section">
+        <div class="modal-section-title">Purpose</div>
+        <div class="modal-prose">
+          <p>Viesti is the wiring of the application. It defines which data flows where. It does not compute. It does not store. It does not schedule. <strong>It routes.</strong></p>
+          <p>Fudgel assumes everything happens instantly — no built-in run loop, no frame tick, no event queue. A Fudgel program is a one-shot execution: data exists in Bija, signals fire, functions run, results are written back to Bija. Recurring execution is a Lifga library concern. Viesti never knows time exists.</p>
+          <p><strong>Signal order is execution order.</strong> Writing signals is simultaneously writing the execution schedule. Deterministic execution order is a direct consequence of file structure, not something the runtime computes or infers.</p>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">The Complete Syntax</div>
+        <div class="modal-prose">
+          <p>Three addresses and two tildes is the complete sequential form:</p>
+        </div>
+        <div class="code-block" style="margin-top:12px;font-size:12px">
+          <div class="code-header"><div class="code-dot viesti"></div><span class="code-lang">Viesti</span></div>
+          <div class="code-body"><span class="cmt">(sequential — source ~ function ~ target)</span>
+<span class="sig">Player.health ~ clamp ~ Player.health</span>
+
+<span class="cmt">(multi-input — populate params, then route output)</span>
+<span class="sig">Hero.attack  ~ strikeCalc.baseDmg</span>
+<span class="sig">Config.armor ~ strikeCalc.armor</span>
+<span class="sig">strikeCalc   ~ Boss.health</span>
+
+<span class="cmt">(parallel pool — ~~ dispatches simultaneously)</span>
+<span class="sig">Hero.luck ~~ critCheck.luck</span>
+    <span class="sig">Battle.round ~ critCheck.roll</span>
+    <span class="sig">Hero.attack  ~~ strikeCalc.baseDmg</span>
+<span class="cmt">(implicit barrier — main thread resumes here)</span>
+
+<span class="cmt">(dormant — observing but routing nowhere)</span>
+<span class="sig">Player.health ~ checkCritical ~</span></div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Resolution Model</div>
+        <div class="modal-prose">
+          <p><strong>Pull model.</strong> A signal resolves when its source address has data available. The signal does not wait for a notification — it resolves when queried, and succeeds only if data is there. This applies equally to Bija source addresses and function output addresses.</p>
+          <p><strong>Function execution gate:</strong> a Rumus function cannot execute until <em>all</em> of its parameter addresses have been populated by Viesti. If only some parameters are available, the signal does not fire — the condition is simply not yet met. No partial execution, no queuing, no error.</p>
+          <p><strong>Dormant signals</strong> are not errors. A signal with no output target observes its source but routes nowhere. It is a compile-time known absence, absent from the execution graph entirely and visible as an unwired edge in the IDE graph.</p>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Parallel Signals</div>
+        <div class="modal-prose">
+          <p>The double tilde <code>~~</code> opens a parallel thread pool at the current execution depth. Signals declared under a <code>~~</code> are dispatched simultaneously to available threads. The main thread waits for all pools at the current depth before proceeding to the next sequential signal. <strong>The barrier is implicit</strong> — defined by indentation, not by any keyword.</p>
+          <p><code>~~</code> can also be chained inline: <code>A ~~ B ~~ C</code> dispatches A, B, and C in parallel. A single <code>~</code> anywhere in a chain is a barrier — everything before it must resolve first.</p>
+          <div class="spec-rule-box">Warning: in a ~~ chain, each ~~ pair shares the middle address as both destination and source. If an address appears on both sides of adjacent ~~ operators, its write and read have no ordering guarantee — a race condition. The IDE flags overlapping addresses in ~~ chains.</div>
+          <p>A <code>~~</code> is a claim about your program's semantics: these signals have no dependency on each other. The <strong>Peril</strong> library verifies this claim at compile time — it runs the pool's signals in both orderings against the fully expanded Bija state and compares outputs. If they differ, compilation halts with the conflicting signal path. Including <code>@Peril</code> means every <code>~~</code> in the application is compiler-verified rather than author-asserted.</p>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Iteration &amp; Conditionals</div>
+        <div class="modal-prose">
+          <p><strong>Iteration</strong> is expressed as an explicit cycle in the Viesti graph. A signal targets a Bija entity that is itself the source of another signal, creating a feedback path. The termination condition is a Rumus function writing to a Bija boolean that downstream signals observe. The cycle is fully visible — declared by the author, seen by the runtime, no hidden looping.</p>
+          <p><strong>Conditionals</strong> do not exist in Viesti syntax. A signal fires unconditionally when its source has data. Conditional branching is the result of a Rumus function writing to distinct Bija addresses based on its computation, with separate signals wired from each. Viesti routes from whichever address receives data. The decision was made inside Rumus.</p>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Invariants</div>
+        <div class="modal-invariants">
+          <div class="modal-invariant">
+            <div class="modal-inv-code">VI-01</div>
+            <div class="modal-inv-text"><strong>Signal order is execution order.</strong> Writing signals is simultaneously writing the execution schedule.</div>
+          </div>
+          <div class="modal-invariant">
+            <div class="modal-inv-code">VI-02</div>
+            <div class="modal-inv-text"><strong>Sequential signals (~) resolve completely before the next begins.</strong> The three-address two-tilde form is the complete sequential unit.</div>
+          </div>
+          <div class="modal-invariant">
+            <div class="modal-inv-code">VI-03</div>
+            <div class="modal-inv-text"><strong>Parallel signals (~~) are dispatched simultaneously.</strong> The main thread waits for all pools at the current depth. The barrier is implicit, defined by indentation.</div>
+          </div>
+          <div class="modal-invariant">
+            <div class="modal-inv-code">VI-04</div>
+            <div class="modal-inv-text"><strong>No timing flags, lifecycle hooks, or conditional triggers.</strong> Signals are unconditional data routes. A signal resolves when its source has data — nothing else.</div>
+          </div>
+          <div class="modal-invariant">
+            <div class="modal-inv-code">VI-05</div>
+            <div class="modal-inv-text"><strong>A dormant signal is not an error.</strong> It is a compile-time known absence, absent from the execution graph entirely.</div>
+          </div>
+          <div class="modal-invariant">
+            <div class="modal-inv-code">VI-06</div>
+            <div class="modal-inv-text"><strong>Iteration is explicit Viesti cycles only.</strong> Rumus contains no loop syntax.</div>
+          </div>
+          <div class="modal-invariant">
+            <div class="modal-inv-code">VI-07</div>
+            <div class="modal-inv-text"><strong>Viesti has no concept of time.</strong> Timing and animation are exclusively Lifga library concerns.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Spec PDF ──────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="modal-spec" onclick="closeModalOnOverlay(event, 'modal-spec')">
+  <div class="modal" style="max-width:880px; height:90%">
+    <div class="modal-header">
+      <div class="modal-accent" style="background:var(--amber)"></div>
+      <div class="modal-header-text">
+        <div class="modal-tag">ProtoSpeech Foundation · v3.0 Draft</div>
+        <div class="modal-title" style="color:var(--cream)">Language Architecture Spec</div>
+        <div class="modal-meaning">fudgel.org</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-spec')">&times;</button>
+    </div>
+    <div class="modal-body">
+
+    <iframe src="fudgel_spec.html" style="width:100%; height:100%; border:none;"></iframe>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // Reveal on scroll
+  const observer = new IntersectionObserver(
+    entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+    { threshold: 0.1, rootMargin: '0px 0px -60px 0px' }
+  );
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Stagger children inside reveal containers
+  document.querySelectorAll('.axioms.reveal, .lib-grid.reveal, .lib-groups.reveal, .invariants-grid.reveal').forEach(container => {
+    const children = container.querySelectorAll('.axiom, .lib-card, .lib-group, .invariant');
+    children.forEach((child, i) => {
+      child.style.transitionDelay = (i * 0.05) + 's';
+    });
+  });
+
+  // Modal helpers
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function closeModalOnOverlay(e, id) {
+    if (e.target === e.currentTarget) closeModal(id);
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay.open').forEach(m => {
+        m.classList.remove('open');
+      });
+      document.body.style.overflow = '';
+    }
+  });
+
+  function scrollSpecTo(id) {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+</script>
+
+<!-- ── MODAL: Libraries ──────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="modal-libraries" onclick="closeModalOnOverlay(event, 'modal-libraries')">
+  <div class="modal" style="max-width:860px">
+    <div class="modal-header">
+      <div class="modal-accent" style="background:var(--amber-dim)"></div>
+      <div class="modal-header-text">
+        <div class="modal-tag">Library Ecosystem</div>
+        <div class="modal-title" style="color:var(--cream)">Libraries</div>
+        <div class="modal-meaning">domain-scoped semantic abstractions</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-libraries')">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="modal-section">
+        <div class="modal-section-title">What a Library Is</div>
+        <div class="modal-prose">
+          <p>Libraries are <strong>domain-scoped semantic abstractions</strong> that compile directly to Bija entities, Rumus functions, and Viesti signals. There is no distinction at the machine level between library code and author code. Libraries receive no special compiler access and carry no runtime overhead beyond what their compiled output requires.</p>
+          <p>A library is a Fudgel source file. There is no intermediate compiled format, no opaque binary. The source is the library. The conventional proprietary library model — distribute compiled output, withhold source — is architecturally impossible for the Fudgel ecosystem. Every library you import is readable and auditable by construction.</p>
+          <p>The <code>@</code> declaration has one universal meaning: <strong>bring this into scope</strong>. The Trinity DSLs use exactly the same import syntax as domain libraries — there is no syntax distinction between a core import and an external one.</p>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Compilation-Pass Libraries</div>
+        <div class="modal-prose">
+          <p>These libraries use Bija syntax for their declarations and run during the compiler's <strong>library pass stage</strong>, operating on the fully expanded application state before the PAF is emitted. They return the failing path if a claim cannot be verified — meaning most errors that would be runtime exceptions elsewhere are compiler errors in Fudgel.</p>
+        </div>
+        <table class="spec-table" style="margin-top:12px">
+          <thead><tr><th>Library</th><th>Role</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>@Ehto</td><td>Constraint validation</td><td>Validates boolean metadata on Bija entities (e.g. <code>{required}</code>, <code>{immutable}</code>). Reference implementation of the compilation pass pattern. Use for constraints that span multiple entities or require a dedicated pass.</td></tr>
+            <tr><td>@Primi</td><td>Primitive type &amp; memory rules</td><td>Structural rules for the Bija layer. Runs during the library pass alongside @Ehto. Foundation for memory safety guarantees.</td></tr>
+            <tr><td>@Peril</td><td>Parallelism verification</td><td>For each <code>~~</code> pool in @Viesti, runs the pool's signals in both orderings and compares outputs. Matching outputs prove independence. Differing outputs mean an undeclared dependency — compilation halts. Optional but recommended for any app using parallel pools.</td></tr>
+          </tbody>
+        </table>
+        <div class="spec-rule-box" style="margin-top:14px">Determinism diagnostic: if a program produces different outputs on two runs with identical input, there is exactly one cause — a <code>~~</code> where an address is written and read without ordering. There is no other mechanism in Fudgel that can produce non-determinism.</div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Visual Stack — Aquilla · Kadro · Smink</div>
+        <div class="modal-prose">
+          <p>The visual library stack has a clear division of responsibility. <strong>Kadro</strong> answers <em>where and how big</em> — pure spatial arithmetic, runs on CPU. <strong>Smink</strong> answers <em>what does this look like</em> — property resolution over the entity tree. <strong>Aquilla</strong> answers <em>what is visible and in what order</em> — a visibility and compositing pass that produces a resolved list of rectangular regions written directly to the framebuffer.</p>
+          <p>The result is invalidation-based rendering, not loop-based. Zero CPU is spent when nothing changes. Each layer is independently testable and replaceable.</p>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-title">Full Library Reference</div>
+        <table class="spec-table">
+          <thead><tr><th>Library</th><th>Meaning</th><th>Responsibility</th></tr></thead>
+          <tbody>
+            <tr><td>Tipus</td><td>Type</td><td>User input handling — keyboard, pointer, touch, gamepad routed as Bija state updates</td></tr>
+            <tr><td>Ehto</td><td>Constraint</td><td>Type checking &amp; validation · compilation-pass · foundational</td></tr>
+            <tr><td>Primi</td><td>First</td><td>Memory management · compilation-pass · foundational</td></tr>
+            <tr><td>Peril</td><td>Peril</td><td>Parallelism verification — proves <code>~~</code> independence at compile time</td></tr>
+            <tr><td>Lifga</td><td>Revive</td><td>Timing, sequences, animation — the only library that introduces time into a Fudgel application</td></tr>
+            <tr><td>Aquilla</td><td>Eagle</td><td>Visibility &amp; CPU framebuffer rendering — compositing pass</td></tr>
+            <tr><td>Kadro</td><td>Frame</td><td>Layout &amp; structural templates — pure spatial arithmetic</td></tr>
+            <tr><td>Smink</td><td>Makeup</td><td>Styling, formatting &amp; theming — property resolution over entity tree</td></tr>
+            <tr><td>Rezo</td><td>Network</td><td>High-performance network handling</td></tr>
+            <tr><td>Zapis</td><td>Record</td><td>File system &amp; database I/O</td></tr>
+            <tr><td>Nësen</td><td>Nest</td><td>Dynamic entity allocation — separate memory pool outside PAF space</td></tr>
+            <tr><td>Giya</td><td>Guidance</td><td>Accessibility &amp; semantic markers</td></tr>
+            <tr><td>Hloov</td><td>Change</td><td>Translation &amp; localisation</td></tr>
+            <tr><td>Kani</td><td>Sound</td><td>Audio processing &amp; playback</td></tr>
+            <tr><td>Pismo</td><td>Font</td><td>Text formatting &amp; typography</td></tr>
+            <tr><td>Cead</td><td>Permission</td><td>User access control &amp; security</td></tr>
+            <tr><td>Nyem</td><td>Squeeze</td><td>Compression &amp; storage optimisation</td></tr>
+            <tr><td>Drysu</td><td>Tangled</td><td>Encryption &amp; cryptographic safety — non-determinism is an explicit opt-in through this library</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

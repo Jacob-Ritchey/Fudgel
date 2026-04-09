@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fudgel IDE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div id="app">
+
+  <!-- Toolbar -->
+  <header id="toolbar">
+    <span class="logo">⬡</span>
+    <span class="title">Fudgel IDE</span>
+    <div class="mode-tabs">
+      <button id="btn-mode-bija" class="active">Bija</button>
+      <button id="btn-mode-rumus">Rumus</button>
+      <button id="btn-mode-viesti">Viesti</button>
+      <button id="btn-mode-all">All</button>
+    </div>
+    <button id="btn-reset" title="Reset to default">↺ Reset</button>
+    <span id="entity-count">0 entities</span>
+  </header>
+
+  <!-- Main split: editor | drag handle | expanded | drag handle | schema -->
+  <div id="main-split">
+
+    <div id="editor-pane">
+      <!-- Monaco mounts here -->
+    </div>
+
+    <div id="drag-handle"></div>
+
+    <div id="expanded-pane">
+      <span class="pane-label" id="expanded-label">Expanded Bija</span>
+      <pre id="expanded-code"></pre>
+    </div>
+
+    <div id="drag-handle-2"></div>
+
+    <div id="schema-pane">
+      <span class="pane-label" id="schema-label">Visual Schema</span>
+      <div id="schema-canvas">
+        <div id="schema-inner">
+          <svg id="schema-edges" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Error panel -->
+  <div id="error-panel" class="ok">✓ No errors</div>
+
+</div>
+
+<!-- Monaco CDN loader -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.0/min/vs/loader.min.js"></script>
+
+<!-- App scripts (order matters) -->
+<script src="js/parser.js"></script>
+<script src="js/expander.js"></script>
+<script src="js/schema.js"></script>
+<script src="js/rumus-parser.js"></script>
+<script src="js/rumus-expander.js"></script>
+<script src="js/rumus-schema.js"></script>
+<script src="js/viesti-parser.js"></script>
+<script src="js/viesti-expander.js"></script>
+<script src="js/viesti-schema.js"></script>
+<script src="js/all-schema.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>

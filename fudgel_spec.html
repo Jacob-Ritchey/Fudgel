@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fudgel — Language Architecture Specification v3.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-0: #0e0e0f; --bg-1: #141415; --bg-2: #1a1a1c; --bg-3: #202024;
+    --border: #2e2e34; --border-lt: #3a3a42;
+    --text-1: #e8e4dc; --text-2: #b8b4ac; --text-3: #7a7870;
+    --cream: #ede8df;
+    --amber-dim: #6b4e1a; --amber-mid: #c47d2a; --amber-lt: #e8a040;
+    --amber-glow: rgba(232,160,64,0.07);
+    --sidebar-w: 220px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 14px; }
+  body {
+    background: var(--bg-0);
+    color: var(--text-2);
+    font-family: 'DM Mono', monospace;
+    line-height: 1.75;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--bg-1);
+    border-right: 1px solid var(--border);
+    padding: 28px 0 40px;
+    display: flex;
+    flex-direction: column;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .sidebar-brand {
+    padding: 0 20px 22px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+  .sidebar-brand-name {
+    font-family: 'DM Serif Display', serif;
+    font-size: 19px;
+    color: var(--amber-lt);
+    letter-spacing: 0.04em;
+    display: block;
+    margin-bottom: 3px;
+  }
+  .sidebar-brand-sub {
+    font-size: 10px;
+    color: var(--text-3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .nav-group-label {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    padding: 14px 20px 5px;
+  }
+  .nav-link {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 5px 20px;
+    font-size: 11.5px;
+    color: var(--text-3);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: color 0.12s, background 0.12s;
+    border-left: 2px solid transparent;
+    margin-left: -1px;
+  }
+  .nav-link:hover { color: var(--text-1); background: var(--bg-2); }
+  .nav-link.active { color: var(--amber-lt); border-left-color: var(--amber-mid); background: var(--amber-glow); }
+  .nav-num { color: var(--amber-dim); font-size: 10px; min-width: 18px; font-variant-numeric: tabular-nums; }
+  .nav-link.active .nav-num { color: var(--amber-mid); }
+
+  /* ── Main ── */
+  .main {
+    flex: 1;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 48px 64px 80px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .main::-webkit-scrollbar { width: 5px; }
+  .main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .content { max-width: 720px; margin: 0 auto; }
+
+  /* ── Page header ── */
+  .page-header {
+    padding-bottom: 36px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 52px;
+  }
+  .page-header-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 10px;
+  }
+  .page-header-eyebrow span { color: var(--amber-mid); }
+  .page-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 38px;
+    font-weight: 400;
+    color: var(--cream);
+    letter-spacing: 0.01em;
+    line-height: 1.15;
+    margin-bottom: 8px;
+  }
+  .page-subtitle { font-size: 13px; color: var(--text-3); font-style: italic; }
+
+  /* ── Sections ── */
+  .spec-section { margin-bottom: 64px; scroll-margin-top: 32px; }
+  .spec-section h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--cream);
+    letter-spacing: 0.01em;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .spec-section h3 {
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--amber-mid);
+    margin: 32px 0 12px;
+  }
+  .spec-section h4 {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--text-1);
+    margin: 22px 0 10px;
+    letter-spacing: 0.04em;
+  }
+  .spec-section p { font-size: 13px; color: var(--text-2); margin-bottom: 14px; line-height: 1.8; }
+  .spec-section ul, .spec-section ol { padding-left: 22px; margin-bottom: 14px; }
+  .spec-section li { font-size: 13px; color: var(--text-2); margin-bottom: 7px; line-height: 1.75; }
+  .spec-section li strong, .spec-section p strong { color: var(--text-1); font-weight: 500; }
+  .spec-section em { color: var(--text-3); font-style: italic; }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--amber-lt);
+    background: var(--bg-3);
+    padding: 1px 5px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+  }
+
+  .spec-rule-box {
+    margin: 20px 0;
+    padding: 14px 18px;
+    background: var(--bg-3);
+    border-left: 3px solid var(--amber-dim);
+    font-size: 13px;
+    color: var(--cream);
+    font-style: italic;
+    line-height: 1.7;
+  }
+  .spec-rule-box code { background: transparent; border: none; padding: 0; }
+
+  .spec-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 14px 0; }
+  .spec-table th {
+    text-align: left;
+    padding: 8px 12px;
+    background: var(--bg-3);
+    color: var(--text-3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .spec-table td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-2);
+    vertical-align: top;
+    font-size: 12.5px;
+    line-height: 1.65;
+  }
+  .spec-table td:first-child {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--amber-lt);
+    white-space: nowrap;
+    font-size: 12px;
+  }
+  .spec-table tr:last-child td { border-bottom: none; }
+  .spec-table td strong { color: var(--text-1); font-weight: 500; }
+
+  pre {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--border-lt);
+    padding: 14px 18px;
+    border-radius: 0 2px 2px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-1);
+    overflow-x: auto;
+    line-height: 1.7;
+    margin: 14px 0;
+    white-space: pre;
+  }
+  pre code { background: none; border: none; padding: 0; color: inherit; font-size: inherit; }
+</style>
+</head>
+<body>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <span class="sidebar-brand-name">FUDGEL</span>
+    <span class="sidebar-brand-sub">Spec v3.1 · Draft</span>
+  </div>
+  <span class="nav-group-label">Introduction</span>
+  <a class="nav-link" href="#s0"><span class="nav-num">0</span>What Fudgel Is</a>
+  <a class="nav-link" href="#s1"><span class="nav-num">1</span>The Trinity</a>
+  <span class="nav-group-label">Sub-languages</span>
+  <a class="nav-link" href="#s2"><span class="nav-num">2</span>Bija — State</a>
+  <a class="nav-link" href="#s3"><span class="nav-num">3</span>Rumus — Logic</a>
+  <a class="nav-link" href="#s4"><span class="nav-num">4</span>Viesti — Signals</a>
+  <span class="nav-group-label">Architecture</span>
+  <a class="nav-link" href="#s5"><span class="nav-num">5</span>Layer Agnosticism</a>
+  <a class="nav-link" href="#s6"><span class="nav-num">6</span>Memory Model</a>
+  <a class="nav-link" href="#s7"><span class="nav-num">7</span>Domain Libraries</a>
+  <a class="nav-link" href="#s8"><span class="nav-num">8</span>PAF Format</a>
+  <span class="nav-group-label">Tooling</span>
+  <a class="nav-link" href="#s9"><span class="nav-num">9</span>The IDE</a>
+  <a class="nav-link" href="#s10"><span class="nav-num">10</span>Build Order</a>
+  <span class="nav-group-label">Reference</span>
+  <a class="nav-link" href="#s11"><span class="nav-num">11</span>Invariants</a>
+  <a class="nav-link" href="#sA"><span class="nav-num">A</span>Quick Reference</a>
+</nav>
+
+<main class="main" id="main">
+<div class="content">
+
+  <header class="page-header">
+    <div class="page-header-eyebrow">ProtoSpeech Foundation &middot; <span>fudgel.org</span></div>
+    <h1 class="page-title">FUDGEL</h1>
+    <p class="page-subtitle">Language Architecture Specification &mdash; v3.1 Draft</p>
+  </header>
+
+  <section id="s0" class="spec-section">
+    <h2>0. What Fudgel Is</h2>
+    <p>Fudgel is a meta-language of intent. It is not a general-purpose programming language. It does not compute, render, allocate memory, or manage time. It describes the structure, logic, and data flow of an application in three distinct sub-languages — each with a single job — and compiles that description directly to bare-metal instruction sets with no intermediate abstraction layer.</p>
+    <p>The architecture is three layers, each completely agnostic to the others:</p>
+    <table class="spec-table">
+      <thead><tr><th>DSL</th><th>Layer</th><th>Single Responsibility</th></tr></thead>
+      <tbody>
+        <tr><td>Bija</td><td>State</td><td>Stores all state as a static entity tree. No logic, no operations. Human-readable names are discarded at runtime — every entity becomes a fixed memory address.</td></tr>
+        <tr><td>Rumus</td><td>Logic</td><td>Pure, finite functions that operate exclusively in registers. Reads no memory, writes no memory. Everything it touches is gone when it returns.</td></tr>
+        <tr><td>Viesti</td><td>Wiring</td><td>Connects Bija addresses to Rumus functions and writes results back to Bija. Supports sequential and parallel execution through a two-symbol syntax.</td></tr>
+      </tbody>
+    </table>
+    <p>Everything else — type checking, validation, timing, rendering, layout, animation, file I/O, encryption — is handled by domain-specific libraries. Each library is a domain-scoped semantic abstraction that compiles directly to Bija entities, Rumus functions, and Viesti signals. There is no distinction at the machine level between library code and author code.</p>
+    <p>Fudgel programs are deterministic by construction. Because Bija is fully resolved at load time, Rumus functions are pure, and Viesti resolves signals in declaration order, the same input state always produces the same output. Non-determinism can only be introduced explicitly through a library.</p>
+    <div class="spec-rule-box">Core Law: if you need logic, write a Rumus function. If you need to remember something, write it to a Bija entity. Viesti connects the two. Nothing else exists.</div>
+
+    <h3>0.1 Design Philosophy</h3>
+    <p>Fudgel exists because the dominant software stack was never designed to be a universal application runtime. It became one through historical accident. The result is that applications with completely different constraints end up built on infrastructure designed for document delivery over a network.</p>
+    <p>The standard response has been more abstraction: frameworks, transpilers, runtimes-within-runtimes. These abstractions treat real symptoms — GC prevents use-after-free, ORMs prevent injection — but they are applied universally at a cost paid even when the original problem does not apply. A local game does not need GC. A simulation does not need an ORM. The tax is paid regardless.</p>
+    <p>Fudgel is closer to a Turing-complete algorithm description format than a conventional programming language. It says not "here is how to program this CPU" but "here is the algorithm — these are the steps, these are the dependencies, these can run in parallel, these cannot." The same source could run on RISC-V today, a GPU tomorrow, and a substrate that does not exist yet next decade — as long as someone has written the library that maps Rumus operations to that substrate's primitives. The algorithm is the stable thing. The execution target is not.</p>
+
+    <h3>0.2 The False Tradeoff</h3>
+    <p>Language design has historically operated on an assumed spectrum: human-readable on one end, machine-efficient on the other. Fudgel's claim is that this tradeoff is false. A sufficiently honest representation of intent is also a sufficient representation for direct compilation, because intent at the right level of granularity is exactly what the machine needs.</p>
+    <p>Bija describes memory layout. Rumus describes operations. Viesti describes execution order and data movement. That is not a simplification of what a computer does — it is an honest description of it in legible syntax. Legibility does not require abstraction. It requires good notation.</p>
+    <p>The key reframe: the decisions Fudgel asks a developer to make are not performance decisions. They are truth claims about the program. <code>~</code> means <em>this depends on that</em>. <code>~~</code> means <em>these have no dependency on each other</em>. <code>{immutable}</code> means <em>this value never changes</em>. <code>!5</code> means <em>these instances are identical in structure</em>. The hardware uses these truths to execute correctly and efficiently — but the developer is not managing the hardware. They are describing their program accurately.</p>
+
+    <h3>0.3 Error Handling and Safety</h3>
+    <p>Fudgel is designed to hard crash on invalid runtime state. There is no exception system, no error monad, no try/catch. If a program reaches an invalid state at runtime, it stops. This is deliberate: runtime error handling is a secondary system bolted onto a primary system that already failed to prevent the error. Preventing the error is the correct investment.</p>
+    <p>Prevention happens at two levels. First, the library compilation pass — Ehto and other libraries inspect the Bija entity tree before the PAF is emitted, validating constraints and flagging missing references as compile-time errors. Second, the IDE's visualiser surfaces structural issues before a build is attempted. The hard crash is a last resort, not a first line of defence.</p>
+
+    <h3>0.4 The IDE is Load-Bearing</h3>
+    <p>The Fudgel IDE is not a convenience tool. It is a core part of the design thesis. The signal graph, the entity tree, and the compilation pass results are all structures that are intuitive when visible and intimidating when read as text. The WYSIWYG visualiser is what makes hardware-level explicitness accessible without being assembly-level painful.</p>
+    <p>The language and IDE should ship together. A language that requires a visualiser to be ergonomic but ships without one will be correctly perceived as hostile.</p>
+
+    <h3>0.5 Target Domain</h3>
+    <p>Fudgel's natural first audience is game and interactive application development. That community already thinks in ECS, already cares about determinism and performance, and is already frustrated with the abstraction overhead of existing engines. The longer-term target is any application that does not require the web stack's specific capabilities but ends up using it anyway due to ecosystem gravity.</p>
+
+    <h3>0.6 Fudgel and AI Tooling</h3>
+    <p>Fudgel's signal graph is the actual runtime topology, not an abstraction over it. Every data dependency is a declared edge. Every state mutation is a named Viesti signal. There is no hidden control flow to infer. A model reading a Fudgel application sees the real execution structure, not a representation of it.</p>
+    <p>What AI coding tools actually do is manage dataflow. A model pattern-matches on relationships between inputs, transformations, and outputs. Fudgel makes that graph literal. A Viesti graph is structurally closer to how a transformer reasons about information movement than a for-loop is. This makes Fudgel a better substrate for AI reasoning than almost anything currently in production use.</p>
+  </section>
+
+  <section id="s1" class="spec-section">
+    <h2>1. The Trinity</h2>
+    <p>Fudgel is composed of exactly three sub-languages, each with a single responsibility. No sub-language can perform the role of another. This separation is enforced by the syntax of each sub-language: a Bija file contains no expressions, a Rumus function contains no storage writes, a Viesti graph contains no conditionals.</p>
+    <table class="spec-table">
+      <thead><tr><th>DSL</th><th>Single Responsibility</th><th>What it cannot do</th></tr></thead>
+      <tbody>
+        <tr><td>Bija</td><td>Store state and structure</td><td>Execute logic or route data</td></tr>
+        <tr><td>Rumus</td><td>Compute pure functions</td><td>Store state or route data</td></tr>
+        <tr><td>Viesti</td><td>Route data between addresses</td><td>Store state or execute logic</td></tr>
+      </tbody>
+    </table>
+    <p>A file's type is defined by its Trinity imports:</p>
+    <table class="spec-table">
+      <thead><tr><th>File Type</th><th>Required Imports</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Application</td><td>@Bija @Rumus @Viesti</td><td>Complete executable. First signal under @Viesti is the entry point.</td></tr>
+        <tr><td>Library</td><td>@Bija @Rumus</td><td>Templates and functions. No @Viesti — wiring is the consumer's concern.</td></tr>
+        <tr><td>Data file</td><td>@Bija</td><td>Pure state declaration. No logic, no signals.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="s2" class="spec-section">
+    <h2>2. Bija — The State Layer</h2>
+
+    <h3>2.1 Purpose</h3>
+    <p>Bija is the entire heap of a Fudgel application. It is the only place where state persists across function calls. At runtime, every human-readable name in a Bija file is discarded. The load-time pass assigns each entity and property a fixed memory offset. All subsequent references become raw pointer arithmetic.</p>
+    <p>This is the key distinction between Bija and general data formats like JSON or PKL. Those formats describe what exists. Bija describes what exists and how to derive everything else from it, purely through structure, with no runtime cost.</p>
+
+    <h3>2.2 Core Rules</h3>
+    <ul>
+      <li>Everything is entities and properties.</li>
+      <li>Every property has exactly one value.</li>
+      <li>Indentation denotes hierarchy.</li>
+      <li>The parser has no type system, no logic, and no operations. Meaning arises from structure, not syntax.</li>
+      <li><strong>Bija values are always atomic.</strong> A value is a literal, a reference, a shorthand token, or empty. It is never an expression. <code>damage: #attack + 20</code> is a syntax error.</li>
+      <li>All entities are mutable by default. The <code>{immutable}</code> flag is a hint to the emitter. Immutable entities are inlined as immediates at compile time and assigned no memory address.</li>
+      <li>All shorthand — commas, !, positional pipes, inline sub-entity — resolves at parse time. Nothing from shorthand syntax survives into the PAF.</li>
+    </ul>
+
+    <h3>2.3 Syntax Reference</h3>
+
+    <h4>Entities</h4>
+    <pre><code>EntityName;
+  SubEntity;</code></pre>
+    <p>Named containers. End with a semicolon. Indentation denotes parent-child hierarchy.</p>
+
+    <h4>Properties</h4>
+    <pre><code>propertyName: value</code></pre>
+    <p>Always <code>name: value</code>. Value is a literal, a reference, a shorthand token, or empty. Never an expression.</p>
+
+    <h4>Empty Value</h4>
+    <pre><code>propertyName: empty</code></pre>
+    <p>The explicit empty value. A property with no value is not null — it is empty by declaration.</p>
+
+    <h4>References — #</h4>
+    <pre><code>#EntityName
+#EntityName.property
+#list.0           (ordered index)</code></pre>
+    <p><code>#</code> means these two things are the same thing. A semantic alias for the author's benefit. The compiler resolves it to the same memory address as the target and removes it. No indirection survives into the compiled output.</p>
+
+    <h4>Value Copy — =</h4>
+    <pre><code>displayHealth: =Player.health</code></pre>
+    <p>Copies the referenced property's value at parse time. The source is forgotten after copying. Not an alias, not a live link — if the source changes at runtime, this property does not change with it.</p>
+
+    <h4>Instantiation</h4>
+    <pre><code>NewThing: #TemplateName</code></pre>
+    <p>Copies the referenced entity's full structure at parse time, including all sub-entities and properties. Not a link. The copy is fully independent after instantiation.</p>
+
+    <h4>Positional Shorthand — | v1, v2 |</h4>
+    <pre><code>Stats | strength, agility, luck |;     (inline sub-entity)
+Sword: #TemplateItem | 15, 3 |         (template override)
+
+TemplateItem;
+  value: 0
+  weight: 1
+  durability: 100
+
+Sword: #TemplateItem | 15, 3 |         (overrides value and weight — durability stays 100)
+Shield: #TemplateItem | 5, 8, 200 |    (overrides all three)</code></pre>
+
+    <h4>Multiplier — !N</h4>
+    <pre><code>enemies: #Enemy !5
+
+(compiler expands to)
+enemies;
+  Enemy_0: #Enemy
+  Enemy_1: #Enemy
+  Enemy_2: #Enemy
+  Enemy_3: #Enemy
+  Enemy_4: #Enemy</code></pre>
+    <p>Stamps out N independent instances at parse time. The count must be a literal integer. Each instance is addressable as <code>#enemies.0</code> through <code>#enemies.4</code>. Combinable with positional shorthand:</p>
+    <pre><code>wave: #Enemy !5 | 200, aggressive |</code></pre>
+
+    <h4>Anonymous Lists — - and *</h4>
+    <pre><code>(ordered)
+loot: -
+  gold
+  gem
+  potion
+(expands to: loot;  0: gold  1: gem  2: potion)
+
+(unordered)
+flags: *
+  active
+  visible
+  collidable
+(expands to: flags;  active: empty  visible: empty  collidable: empty)</code></pre>
+    <p>The <code>-</code> marker creates numbered sub-entities with their values. The <code>*</code> marker creates named sub-entities with empty values — the names are the data. Both resolve at parse time. Neither construct exists in the compiled output.</p>
+
+    <h4>Metadata Booleans — {flag1, flag2}</h4>
+    <pre><code>health: 100 {required, unique}
+
+(expands to)
+health: 100
+  required: true
+  unique: true</code></pre>
+    <p>Only booleans belong inside <code>{}</code>. The words <code>required</code>, <code>unique</code>, <code>immutable</code> and any others are not part of the Bija language — their meaning is supplied entirely by the library that reads them during the compilation pass.</p>
+
+    <h4>Literal Strings — [...]</h4>
+    <pre><code>propertyName: [literal text content
+that may span multiple lines]</code></pre>
+
+    <h4>Comments</h4>
+    <pre><code>(this is a comment and is ignored by the parser)</code></pre>
+    <p>Parentheses delimit comments in all three DSLs. May appear anywhere, including inline. Nesting is supported.</p>
+
+    <h3>2.4 Reference Semantics</h3>
+    <table class="spec-table">
+      <thead><tr><th>Syntax</th><th>Name</th><th>Behaviour</th></tr></thead>
+      <tbody>
+        <tr><td>#Entity.property</td><td>Alias</td><td>Compiler resolves to same address. Reference removed. No runtime indirection.</td></tr>
+        <tr><td>=Entity.property</td><td>Value copy</td><td>Value copied at parse time. Source forgotten. Independent at runtime.</td></tr>
+      </tbody>
+    </table>
+    <p>Neither syntax creates a live link. Bija is fully static after load. The only mechanism that reads or writes Bija state at runtime is a Viesti signal.</p>
+
+    <h3>2.5 @ Declarations and File Types</h3>
+    <p><code>@</code> has one universal meaning: bring this into scope. Every Fudgel file must declare its imports explicitly. Trinity imports also act as section markers — declarations following a Trinity import belong to that layer's scope. Import order is declaration order is compilation-pass order.</p>
+    <pre><code>@Bija
+@Ehto
+Player;
+  health: 100 {required}
+
+@Rumus
+? clamp{x, min, max};
+  belowMin: x < min ? min : x
+  result: belowMin > max ? max : belowMin
+  ~result
+
+@Viesti
+Player.health ~ clamp ~ Player.health</code></pre>
+
+    <h3>2.6 Full Bija Example</h3>
+    <pre><code>@Bija
+@Ehto
+
+Player;
+  name: Kael
+  health: 180 {required}
+  mana: 90 {required}
+  startingHealth: =Config.maxHealth
+  inventory;
+    loot: -
+      gold
+      gem
+      potion
+    equippedItem: #loot.0
+  stats;
+    strength: 10
+    agility: 8
+
+Enemy;
+  health: 80
+  behaviour: passive
+
+TemplateItem;
+  value: 0
+  weight: 1
+
+Sword: #TemplateItem | 15, 3 |
+  durability: 100
+
+Scene;
+  basicEnemies: #Enemy !5
+  eliteWave: #Enemy !3 | 200, aggressive |
+
+Config;
+  maxHealth: 100 {immutable}
+  version: 1 {immutable}
+
+UI;
+  shownHealth: =Player.health</code></pre>
+  </section>
+
+  <section id="s3" class="spec-section">
+    <h2>3. Rumus — The Logic Layer</h2>
+
+    <h3>3.1 Purpose</h3>
+    <p>Rumus is a pure transformation notation. A Rumus function takes named inputs, applies a transformation, and exposes outputs. It has no side effects, no memory allocation, no loops, and no branching. It describes what a computation is, not what a substrate does to perform it.</p>
+    <p>Rumus core defines the shape of transformation — bind, compose, apply, select — without assuming anything about what kind of values are being transformed or what hardware will execute the transformation. There is no optimisation pass. Performance is a direct product of design quality.</p>
+
+    <h3>3.2 Rumus Core — Transformation Primitives</h3>
+    <table class="spec-table">
+      <thead><tr><th>Primitive</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>bind</td><td>Give a value a name for use within a function scope. Parameters are bindings.</td></tr>
+        <tr><td>apply</td><td>Pass a value to a function and receive its output. Function calls are applications.</td></tr>
+        <tr><td>compose</td><td>The output of one function becomes the input of another. The ~ output feeds the next binding.</td></tr>
+        <tr><td>select</td><td>Given multiple values, produce one. The conditional shorthand expands to this.</td></tr>
+      </tbody>
+    </table>
+    <p>These four primitives are sufficient for Turing completeness without recursion, given that iteration is handled by Viesti signal cycles.</p>
+
+    <h3>3.3 @rumus-riscv — Current Working Target</h3>
+    <table class="spec-table">
+      <thead><tr><th>Rumus operation</th><th>RISC-V instruction</th></tr></thead>
+      <tbody>
+        <tr><td>x + y</td><td>ADD</td></tr>
+        <tr><td>x - y</td><td>SUB</td></tr>
+        <tr><td>x * y</td><td>MUL</td></tr>
+        <tr><td>x / y</td><td>DIV</td></tr>
+        <tr><td>x % y</td><td>REM</td></tr>
+        <tr><td>x = y</td><td>BEQ</td></tr>
+        <tr><td>x &lt; y</td><td>BLT</td></tr>
+        <tr><td>a ? b : c</td><td>Branch + label</td></tr>
+      </tbody>
+    </table>
+    <p>The bitwise operations (<code>&amp;</code>, <code>|</code>, <code>^</code>, <code>~</code>, <code>&gt;&gt;</code>, <code>&lt;&lt;</code>) are hardware-specific and belong in a systems target library. The ternary <code>a ? b : c</code> is shorthand for a Rumus core select operation — it expands at emit time. Rumus has no branching. Branching is Viesti's job.</p>
+
+    <h3>3.4 Standard Operation Set</h3>
+
+    <h4>Arithmetic</h4>
+    <table class="spec-table">
+      <thead><tr><th>Operator</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>x + y</td><td>Addition</td></tr>
+        <tr><td>x - y</td><td>Subtraction</td></tr>
+        <tr><td>x * y</td><td>Multiplication</td></tr>
+        <tr><td>x / y</td><td>Division</td></tr>
+        <tr><td>x % y</td><td>Remainder — divisibility checks and wrapping</td></tr>
+        <tr><td>-x</td><td>Unary negation — distinct from binary subtraction</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Comparison</h4>
+    <table class="spec-table">
+      <thead><tr><th>Operator</th><th>Description</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>x = y</td><td>Equal</td><td>Single <code>=</code> is equality in Rumus, not assignment</td></tr>
+        <tr><td>x != y</td><td>Not equal</td><td></td></tr>
+        <tr><td>x &lt; y</td><td>Less than</td><td></td></tr>
+        <tr><td>x &gt; y</td><td>Greater than</td><td></td></tr>
+        <tr><td>x &lt;= y</td><td>Less than or equal</td><td></td></tr>
+        <tr><td>x &gt;= y</td><td>Greater than or equal</td><td></td></tr>
+      </tbody>
+    </table>
+    <div class="spec-rule-box">Equality in Rumus is a single <code>=</code>. It is a comparison, not assignment. Bija uses <code>=</code> for value copy; Rumus uses it for equality testing inside expressions.</div>
+
+    <h4>Boolean</h4>
+    <table class="spec-table">
+      <thead><tr><th>Operator</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>a &amp; b</td><td>Boolean AND — both true</td></tr>
+        <tr><td>a | b</td><td>Boolean OR — at least one true</td></tr>
+        <tr><td>!a</td><td>Boolean NOT — inverted truth value</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Conditional</h4>
+    <pre><code>a ? b : c</code></pre>
+    <p>Produces a value — does not route behaviour. Valid only when both branches produce values of the same kind through pure transformation of inputs. Any selection that routes to meaningfully different behaviours belongs in Viesti.</p>
+
+    <h4>Formal Logic — Assertions</h4>
+    <p>Assertions are statements about relationships between truth values scoped to function evaluation. They are not expressions — they are constraints that must hold. If an assertion fails, execution halts with the function path and the specific assertion that failed.</p>
+    <table class="spec-table">
+      <thead><tr><th>Operator</th><th>Name</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>a -&gt; b</td><td>Implication</td><td>If a is true, b must be true</td></tr>
+        <tr><td>a &lt;-&gt; b</td><td>Biconditional</td><td>a is true exactly when b is true</td></tr>
+        <tr><td>a ^ b</td><td>Exclusive or</td><td>One or the other, never both</td></tr>
+        <tr><td>a !&amp; b</td><td>NAND</td><td>Not both simultaneously true — mutual exclusion</td></tr>
+        <tr><td>a !| b</td><td>NOR</td><td>Neither is true — joint absence</td></tr>
+        <tr><td>a &lt;- b</td><td>Converse implication</td><td>If b is true, a must be true</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.5 Function Declaration and Body</h3>
+    <pre><code>? functionName{param1, param2};
+  intermediate: param1 + param2
+  param1 > 0 -> intermediate > param1   (formal logic assertion)
+  anotherStep: intermediate * 2
+  ~anotherStep</code></pre>
+    <p>The <code>?</code> prefix marks a Rumus function entity. Parameters use <code>{}</code> boolean shorthand — each expands to a sub-entity with value true. Viesti overwrites them with actual values before execution. A function cannot run unless all parameters have been supplied. Body property names are discarded at emit time and become positional register slots. A function body that exceeds available register capacity is undefined behaviour — decompose the function.</p>
+
+    <h3>3.6 Output Declaration — ~</h3>
+    <pre><code>~value
+~value1, value2</code></pre>
+    <p><code>~</code> declares which values are exposed to Viesti. These are the only externally addressable values on a function entity. All other body properties are ephemeral and do not exist in the PAF.</p>
+
+    <h3>3.7 The Function Address Surface</h3>
+    <table class="spec-table">
+      <thead><tr><th>Address</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>functionName.x (parameter)</td><td>Viesti writes here to supply data. Overrides the default true before execution.</td></tr>
+        <tr><td>functionName.lo (~ output)</td><td>Viesti reads here to route the result onward after the function returns.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.8 Calling Another Function</h3>
+    <pre><code>? normalise{x};
+  clamped: #clamp | x, 0, 100 |
+  result: clamped / 100
+  ~result</code></pre>
+    <p>A Rumus function may call another using Bija instantiation syntax. <strong>Single caller:</strong> the called function is inlined — its body is substituted directly into the caller's instruction sequence. <strong>Multiple callers:</strong> the function is emitted as a subroutine. This is a determinism guarantee, not an optimisation.</p>
+
+    <h3>3.9 # in Rumus</h3>
+    <pre><code>(author writes)
+? applyScale{value};
+  result: value * #Config.scaleFactor
+  ~result
+
+(compiler expands to)
+Config.scaleFactor ~ passthrough ~ applyScale.scaleFactor
+
+? applyScale{value, scaleFactor};
+  result: value * scaleFactor
+  ~result</code></pre>
+    <p><code>#</code> inside a Rumus function body means the value comes from a live Bija address. The compiler expands this to a Viesti inbound signal before emission. Rumus never reads Bija directly at runtime.</p>
+
+    <h3>3.10 No Loops</h3>
+    <p>Rumus contains no loop syntax. Every function is provably finite. Iteration is expressed as an explicit cycle in the Viesti signal graph, with Bija entities holding intermediate state between steps.</p>
+
+    <h3>3.11 Memory Contract</h3>
+    <p>Rumus functions operate exclusively in registers. No heap allocation occurs inside a Rumus function. When a function returns, every intermediate value is gone. The only way a result persists is if Viesti writes an output address to a Bija entity. Garbage collection is an inapplicable concept — there is nothing to collect.</p>
+
+    <h3>3.12 Full Rumus Example</h3>
+    <pre><code>@Rumus
+@rumus-riscv
+
+? hitCheck{roll, defense};
+  threshold: defense - 5
+  hit: roll >= threshold ? 1 : 0
+  ~hit
+
+? critCheck{luck, roll};
+  chance: 60 + luck
+  crits: roll * 6 > chance ? 1 : 0
+  ~crits
+
+? strikeCalc{baseDmg, armor, isCrit};
+  reduced: baseDmg - armor
+  multiplied: isCrit = 1 ? reduced * 2 : reduced
+  dmg: multiplied < 1 ? 1 : multiplied
+  ~dmg
+
+? takeDamage{health, dmg};
+  result: health - dmg
+  health > 0 -> result >= 0
+  remaining: result < 0 ? 0 : result
+  ~remaining
+
+? transitionCombat{current, incoming};
+  isIdle: current = idle
+  isCombat: current = combat
+  isDead: current = dead
+  isDead !& isCombat
+  isIdle -> incoming = combat
+  isDead -> incoming = dead
+  next: isDead ? current : incoming
+  ~next</code></pre>
+  </section>
+
+  <section id="s4" class="spec-section">
+    <h2>4. Viesti — The Signal Layer</h2>
+
+    <h3>4.1 Purpose</h3>
+    <p>Viesti is the wiring of the application. It defines which data flows where. It does not compute. It does not store. It does not schedule. It routes.</p>
+    <p>Fudgel assumes a one-shot execution model. There is no built-in run loop, no frame tick, no event queue. Data exists in Bija, signals fire, functions run, results are written back to Bija. Recurring execution is a Lifga library concern. The core language has no concept of time.</p>
+    <p>A signal resolves when its source address has data available. This is a pull model. A function cannot execute until all of its parameter addresses have been populated by Viesti — no partial execution, no error, the condition is simply not yet met. Signal order is execution order.</p>
+
+    <h3>4.2 Sequential Signals — ~</h3>
+    <pre><code>source ~ function ~ target</code></pre>
+    <table class="spec-table">
+      <thead><tr><th>Part</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>source</td><td>Named address on a Bija entity, or a parameter address on a function entity</td></tr>
+        <tr><td>function</td><td>A Rumus function entity</td></tr>
+        <tr><td>target</td><td>Named address on a Bija entity, or a parameter address on a function entity</td></tr>
+      </tbody>
+    </table>
+
+    <h3>4.3 Parallel Signals — ~~</h3>
+    <pre><code>Hero.luck ~ hitCheck.roll ~ Hero.luck     (sequential seed)
+
+Hero.luck ~~ critCheck.luck               (parallel pool opens here)
+  Battle.round ~ critCheck.roll
+  Hero.attack ~~ strikeCalc.baseDmg
+  Config.armorBase ~ strikeCalc.armor
+  critCheck ~ strikeCalc.isCrit
+  strikeCalc ~ takeDamage.dmg
+
+Boss.health ~ takeDamage.health           (implicit barrier — all pools resolved)</code></pre>
+    <p>The double tilde <code>~~</code> opens a parallel thread pool at the current execution depth. Signals declared under a <code>~~</code> are dispatched simultaneously. The main thread waits for all pools at the current depth to fully resolve before proceeding to the next sequential signal. The barrier is implicit — defined by indentation, not by any keyword. Nesting works recursively; the tree resolves leaves-first.</p>
+
+    <h3>4.4 Inline Parallel Chains</h3>
+    <pre><code>A ~~ B ~~ C                          (A, B, C dispatched in parallel)
+
+A ~~ B ~~ C ~ D ~ E ~~ F            (barrier at ~; D then E sequential; new pool at F)</code></pre>
+    <div class="spec-rule-box">Race condition warning: in <code>A ~~ B ~~ C</code>, B is simultaneously being written to and read from with no ordering guarantee. <code>~~</code> chaining is only safe when no address appears on both sides of adjacent <code>~~</code> operators. The IDE will flag overlapping addresses.</div>
+
+    <h3>4.5 Parallelism Verification — @Peril</h3>
+    <p>The Peril library is a compilation pass that verifies the independence claims of every <code>~~</code> pool. For each pool, Peril runs the pool's signals in both possible orderings against the full expanded Bija state, then compares outputs. Matching outputs prove independence. Differing outputs mean a dependency exists that was not declared — compilation halts with the conflicting signal path.</p>
+    <p>This is not a runtime check. It is a compiler-level correctness proof. <code>@Peril</code> is optional. If a program produces different outputs on two runs with identical input, there is exactly one cause in Fudgel: a <code>~~</code> where an address is being written and read without ordering.</p>
+
+    <h3>4.6 Dormant Signals</h3>
+    <pre><code>Player.health ~ checkCritical ~</code></pre>
+    <p>A signal with no output target is dormant. Absent from the execution graph entirely — a compile-time known absence, not a runtime invalid state. Visible in the IDE as an unwired edge. Wiring an output activates it immediately without any other change.</p>
+
+    <h3>4.7 Iteration via Signal Cycles</h3>
+    <pre><code>WorkQueue.current ~ processItem ~ WorkQueue.result
+WorkQueue.result ~ checkDone ~ WorkQueue.isDone
+WorkQueue.isDone ~ onFalse ~ WorkQueue.current
+WorkQueue.isDone ~ onTrue ~ Output.final</code></pre>
+    <p>Iteration is expressed as an explicit cycle in the Viesti graph. A signal targets a Bija entity that is itself the source of another signal, creating a feedback path. The cycle is fully visible in the graph. There is no hidden looping.</p>
+
+    <h3>4.8 Conditional Routing</h3>
+    <p>Viesti has no conditional syntax. A signal resolves unconditionally when its source has data. Conditional branching is the result of a Rumus function writing to distinct Bija addresses. Separate signals are wired from each. The decision was made inside Rumus.</p>
+
+    <h3>4.9 Full Viesti Example</h3>
+    <pre><code>@Viesti
+
+Hero.luck ~ hitCheck.roll ~ Hero.luck
+
+Hero.luck ~~ critCheck.luck
+  Battle.round ~ critCheck.roll
+  Hero.attack ~~ strikeCalc.baseDmg
+  Config.armorBase ~ strikeCalc.armor
+  critCheck ~ strikeCalc.isCrit
+  Boss.health ~~ takeDamage.health
+  strikeCalc ~ takeDamage.dmg
+
+takeDamage ~ Boss.health
+
+Boss.health ~ phaseCheck.health
+Config.maxHealth ~ phaseCheck.maxHp
+phaseCheck ~ Boss.phase
+
+(dormant — xp formula not yet wired)
+Battle.lastDmg ~ xpGain.dmg
+Battle.round ~ xpGain.round
+xpGain ~</code></pre>
+  </section>
+
+  <section id="s5" class="spec-section">
+    <h2>5. Layer Agnosticism</h2>
+    <p>The most important architectural principle in Fudgel is not the Trinity itself — it is that each layer is completely blind to the existence of the others.</p>
+    <table class="spec-table">
+      <thead><tr><th>Layer</th><th>Knows only how to…</th></tr></thead>
+      <tbody>
+        <tr><td>Bija</td><td>Parse entities, properties, and boolean sub-entities. Store them. Display them as a tree.</td></tr>
+        <tr><td>Rumus</td><td>Accept named inputs, evaluate a sequence of expressions, write results to ~ output addresses, and return. It does not know where inputs came from or where outputs are going.</td></tr>
+        <tr><td>Viesti</td><td>Read a source address, invoke a function, write to a target address. It does not know what the function does, what types mean, or when anything should happen.</td></tr>
+        <tr><td>Libraries</td><td>Operate on the Bija state passed to them. They do not know other libraries exist.</td></tr>
+      </tbody>
+    </table>
+    <p>This is not a design preference. It is what makes the system provably simple. Agnosticism means every layer can be understood, tested, and replaced in complete isolation.</p>
+
+    <h3>5.1 The Library Compilation Pass</h3>
+    <p>Because Bija stores all metadata booleans as plain sub-entities, libraries can participate in compilation by reading that state and acting on it before the PAF is emitted. This is how type checking, validation, and constraint enforcement work without any of those concepts existing in the core language.</p>
+    <p>The compilation pipeline is ordered:</p>
+    <ol>
+      <li><strong>Bija parsing</strong> — produces a flat entity tree. No semantics assigned.</li>
+      <li><strong>Library passes</strong> — each participating library runs its Rumus functions over the entity tree in import declaration order. Any pass that returns false halts compilation and surfaces the failing entity path.</li>
+      <li><strong>PAF emission</strong> — the validated entity tree is compiled to binary format. Names are discarded. Addresses are assigned.</li>
+    </ol>
+  </section>
+
+  <section id="s6" class="spec-section">
+    <h2>6. The Memory Model</h2>
+    <table class="spec-table">
+      <thead><tr><th>Layer</th><th>Memory role and lifetime</th></tr></thead>
+      <tbody>
+        <tr><td>Bija</td><td>The entire application heap. Entities are allocated at load time and persist until the application terminates or a signal writes empty to them. No dynamic allocation occurs at runtime.</td></tr>
+        <tr><td>Rumus</td><td>Registers only. Allocated at function entry, freed at function return. Nothing escapes unless Viesti explicitly writes the output to a Bija entity. Garbage collection is an inapplicable concept.</td></tr>
+        <tr><td>Viesti</td><td>The write path between Rumus and Bija. Not a memory region. A signal is a resolution operation, not a data store.</td></tr>
+      </tbody>
+    </table>
+    <div class="spec-rule-box">Invariant: a value exists in one of two states — stored in a named Bija entity, or in transit through a Rumus function. It cannot be in both simultaneously. It cannot be anywhere else.</div>
+  </section>
+
+  <section id="s7" class="spec-section">
+    <h2>7. The Domain Libraries</h2>
+    <p>The Fudgel standard library is composed of domain-specific libraries. Each library is agnostic: it does not know other libraries exist. Libraries are domain-scoped semantic abstractions that compile directly to Bija entities, Rumus functions, and Viesti signals. There is no distinction at the machine level between library code and author code.</p>
+
+    <h3>7.1 The @ Declaration</h3>
+    <p><code>@</code> has one universal meaning: bring this into scope. The Trinity is not privileged at the syntax level — only at the architecture level. A library file is a Fudgel source file. There is no intermediate compiled format. The source is the library.</p>
+    <pre><code>@Ehto              (standard library)
+@path/to/library   (custom or third-party)
+@../shared/myUtils</code></pre>
+
+    <h3>7.2 Libraries Are Inherently Open</h3>
+    <p>Fudgel has no proprietary library model. This is not a licensing stance — it is a structural consequence. There is no intermediate compiled format, no opaque binary, no bytecode to distribute in place of source. The conventional proprietary library model is architecturally impossible in Fudgel.</p>
+
+    <h3>7.3 Standard Libraries</h3>
+
+    <h4>Target Libraries</h4>
+    <table class="spec-table">
+      <thead><tr><th>Library</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>@rumus-riscv</td><td>Numeric arithmetic and comparison primitives for RISC-V execution. Current working target.</td></tr>
+        <tr><td>@rumus-wgsl</td><td>Planned. Shader operation primitives for GPU execution via WGSL.</td></tr>
+        <tr><td>@rumus-llvm</td><td>Planned. LLVM IR emission for broad hardware coverage.</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Domain Libraries</h4>
+    <table class="spec-table">
+      <thead><tr><th>Library</th><th>Meaning</th><th>Responsibility</th></tr></thead>
+      <tbody>
+        <tr><td>Tipus</td><td>Type</td><td>User input handling</td></tr>
+        <tr><td>Ehto</td><td>Constraint</td><td>Type checking and validation</td></tr>
+        <tr><td>Primi</td><td>First</td><td>Memory management</td></tr>
+        <tr><td>Peril</td><td>Peril</td><td>Parallelism verification — proves ~~ independence at compile time</td></tr>
+        <tr><td>Lifga</td><td>Revive</td><td>Timing, sequences, animation — the only library that introduces time</td></tr>
+        <tr><td>Aquilla</td><td>Eagle</td><td>Visibility and framebuffer rendering</td></tr>
+        <tr><td>Kadro</td><td>Frame</td><td>Layout and structural templates</td></tr>
+        <tr><td>Smink</td><td>Makeup</td><td>Styling, formatting, and theming</td></tr>
+        <tr><td>Rezo</td><td>Network</td><td>High-performance network handling</td></tr>
+        <tr><td>Zapis</td><td>Record</td><td>File system and database I/O</td></tr>
+        <tr><td>Nësen</td><td>Nest</td><td>Dynamic entity allocation — operates in a separate memory pool</td></tr>
+        <tr><td>Giya</td><td>Guidance</td><td>Accessibility and semantic markers</td></tr>
+        <tr><td>Hloov</td><td>Change</td><td>Translation and localisation</td></tr>
+        <tr><td>Kani</td><td>Sound</td><td>Audio processing and playback</td></tr>
+        <tr><td>Pismo</td><td>Font</td><td>Text formatting and typography</td></tr>
+        <tr><td>Cead</td><td>Permission</td><td>User access control and security</td></tr>
+        <tr><td>Nyem</td><td>Squeeze</td><td>Compression and storage</td></tr>
+        <tr><td>Drysu</td><td>Tangled</td><td>Encryption and cryptographic safety</td></tr>
+      </tbody>
+    </table>
+
+    <h3>7.4 The Visual Library Stack</h3>
+    <p>Kadro, Smink, and Aquilla are not graphics libraries in the traditional sense — they are semantic description layers that happen to produce visual output.</p>
+    <ul>
+      <li><strong>Kadro</strong> answers <em>where is this and how big</em> — pure spatial arithmetic, entirely CPU-expressible.</li>
+      <li><strong>Smink</strong> answers <em>what does this look like</em> — property resolution over the entity tree, pure Rumus computation.</li>
+      <li><strong>Aquilla</strong> answers <em>what is visible and in what order</em> — a visibility and compositing pass over what Kadro and Smink already resolved.</li>
+    </ul>
+    <p>The rendering model is invalidation-based, not loop-based. A signal fires, Aquilla resolves the affected region, pixels update, execution stops. A Fudgel application with no state changes consumes essentially zero CPU — genuinely idle until a signal fires. There is no virtual DOM reconciliation, no full frame diff. The diff is free because it is the signal table.</p>
+
+    <h3>7.5 Physics and Simulation</h3>
+    <p>Fudgel has no frame budget. A physics signal fires, the simulation runs Rumus functions to completion — however many iterations convergence requires — and writes the result to Bija. The physics can be as accurate as the algorithm, not as accurate as the budget allows.</p>
+    <p>Precalculation and baking are first-class citizens. Because Bija is fully declared state, the boundary between precalculated and live is explicit and visible in source. A developer can run the full simulation at authoring time, write the results into Bija entity states, and at runtime apply only the delta between the baked path and actual player interaction.</p>
+  </section>
+
+  <section id="s8" class="spec-section">
+    <h2>8. The PAF — Published Application Format</h2>
+    <p>The PAF is the compiled, binary-efficient output of a finalised Fudgel application. It is a shipping format, not a development format.</p>
+
+    <h3>8.1 Memory Model</h3>
+    <p>PAF entity blocks are variable width — the PAF header maps entity addresses to byte offsets. Lookup is O(1) via the index rather than O(n) traversal. The PAF declares its total memory footprint upfront in the header. The runtime allocates this once on load. There is no allocator at runtime — the compiler made every allocation decision.</p>
+
+    <h3>8.2 Header Structure</h3>
+    <pre><code>[total_memory_footprint]   — runtime allocates this once
+[entity_count]             — length of the index
+[entity_start_offsets]     — flat array, one value per entity
+[signal_count]             — length of signal table
+[signal_table]             — flat array of address pairs
+[data_region_offset]       — where bulk bytestreams begin</code></pre>
+
+    <h3>8.3 PAF Space and Nësen Space</h3>
+    <p>PAF space is entirely static, entirely compiler-decided, entirely predictable. A program that does not import Nësen has provably no dynamic allocation, no GC, no runtime memory management of any kind — an auditable guarantee, not a claim.</p>
+    <p>Nësen operates in a separate memory pool outside PAF space with its own allocator. PAF addresses and Nësen addresses occupy distinct ranges. A signal destination is unambiguously one or the other from the address value alone — no type tag, no runtime check.</p>
+
+    <h3>8.4 Format Properties</h3>
+    <p>A PAF file contains no source names, no type information beyond memory layout requirements, and no runtime interpreter. It is loaded by the Fudgel Runtime, which maps it into memory and begins executing from the first signal declared in the application's <code>@Viesti</code> section. Distributing a PAF is publishing an application. The PAF format specification is a separate document currently under development.</p>
+  </section>
+
+  <section id="s9" class="spec-section">
+    <h2>9. The Fudgel IDE</h2>
+
+    <h3>9.1 Architecture</h3>
+    <p>The Fudgel IDE is a multitab environment. The primary tab presents the application as a live schema — a node graph of the Bija entity tree and Viesti signal graph that actually runs. It is not a mockup. It is the application, rendered as a readable structure, executing in real time or at controllable speed.</p>
+    <p>The graph view is strictly read-only. The canonical source of truth is always the code the developer writes. By keeping the graph read-only, Fudgel retains full compatibility with version control, code review, and the entire text-based tooling ecosystem. This is only possible because Fudgel's source structure and execution structure are the same thing — there is no translation to visualise.</p>
+
+    <h3>9.2 Library Tabs</h3>
+    <p>Each domain library gets its own IDE tab. The render library tab shows the visual layout. The signal library tab shows timing and event flow. The type library tab shows constraint validation state across the entity tree. This segments complexity by domain — nobody has to look at the full graph at once unless the task requires it.</p>
+
+    <h3>9.3 Code-to-Graph Navigation</h3>
+    <p>Selecting a node in the graph view jumps to the Bija entity or Viesti signal that defines it. Editing the source updates the graph immediately.</p>
+
+    <h3>9.4 MVP Visualiser</h3>
+    <p>The full IDE is gated on library maturity. The immediate priority is an MVP visualiser that parses Fudgel source and renders the signal graph, showing data movement in real time or at controlled speed. This validates the core Trinity implementation and makes the language comprehensible to people who have not read the spec.</p>
+  </section>
+
+  <section id="s10" class="spec-section">
+    <h2>10. Build Order</h2>
+    <table class="spec-table">
+      <thead><tr><th>Stage</th><th>Deliverable and rationale</th></tr></thead>
+      <tbody>
+        <tr><td>1. Core compiler</td><td>Parser for Bija, Rumus emitter targeting RISC-V, Viesti graph builder including parallel pool resolution. The minimum needed to produce a valid PAF from source.</td></tr>
+        <tr><td>2. MVP visualiser</td><td>Read-only graph renderer showing the live Bija entity tree, Viesti signal flow, and parallel execution clusters. Makes the language legible to contributors.</td></tr>
+        <tr><td>3. Base libraries</td><td>Ehto (type/constraint), Primi (memory), Lifga (timing), and a base iteration library. Enables real programs to be written.</td></tr>
+        <tr><td>4. Domain libraries</td><td>Aquilla, Kadro, Smink, and the remaining domain-specific libraries, developed in order of need.</td></tr>
+        <tr><td>5. Full IDE</td><td>Multitab environment with domain library tabs, built reactively from what each library proved it needs to show.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="s11" class="spec-section">
+    <h2>11. Architectural Invariants</h2>
+    <p>The following invariants must hold in any valid Fudgel application. They are not conventions. A Fudgel compiler must reject any application that violates them.</p>
+    <ul>
+      <li>Every Fudgel file must declare its Trinity imports explicitly. A file's <code>@</code> block is its interface declaration.</li>
+      <li><code>@</code> has one universal meaning: bring this into scope. The Trinity DSLs use the same syntax as domain libraries.</li>
+      <li>A file's type is defined by its imports. An application declares all three Trinity layers. A library declares <code>@Bija</code> and <code>@Rumus</code> but not <code>@Viesti</code>. A data file declares only <code>@Bija</code>.</li>
+      <li>The first signal declared under <code>@Viesti</code> is the application entry point. Execution begins there and proceeds in signal declaration order.</li>
+      <li>Bija contains no unresolved references. Every address is fully determined at load time.</li>
+      <li>Bija values are always atomic. A value is a literal, a reference, a shorthand token, or empty. Never an expression.</li>
+      <li>The <code>*</code> list marker creates named sub-entities with empty values. Names are the data. The <code>-</code> list marker creates numbered sub-entities with their values. Neither construct exists in the compiled output.</li>
+      <li>The <code>!</code> multiplier resolves at parse time to N independent named instances. The count must be a literal integer.</li>
+      <li>A Fudgel program is deterministic by construction. Non-determinism can only be introduced explicitly through a library.</li>
+      <li>Bija has no privileged keywords. All metadata booleans are plain sub-entities. Their meaning belongs to the library that reads them.</li>
+      <li>Rumus function parameters are declared using <code>{}</code> boolean shorthand. They expand to sub-entities with value true. Viesti overwrites them before execution. A function cannot run unless all parameters have been supplied.</li>
+      <li>The only externally addressable values on a Rumus function entity are its parameter addresses and its <code>~</code> declared output values. All body properties are ephemeral and do not exist in the PAF.</li>
+      <li>Body property names in Rumus are discarded at emit time and become positional register slots. Overflow is undefined behaviour.</li>
+      <li>A Rumus function called by a single caller is inlined at emit time. A function called by multiple callers is emitted as a subroutine. This is a determinism guarantee, not an optimisation.</li>
+      <li>Rumus never reads Bija directly at runtime. <code>#</code> in Rumus is always expanded to a Viesti signal at compile time.</li>
+      <li>Viesti signals resolve in the order they are written in the file. Signal order is execution order.</li>
+      <li>A signal resolves when its source address has data available. This is a pull model. A function does not fire until all parameters are populated.</li>
+      <li>Sequential signals (<code>~</code>) resolve completely before the next signal begins.</li>
+      <li>Parallel signals (<code>~~</code>) are dispatched simultaneously to available threads. The main thread waits for all pools at the current depth before the next sequential signal. The barrier is implicit, defined by indentation.</li>
+      <li><code>~~</code> chaining is only safe when no address appears on both sides of adjacent <code>~~</code> operators. Overlapping addresses produce a race condition.</li>
+      <li>A signal with no output target is dormant. It is a compile-time known absence, not a runtime invalid state.</li>
+      <li>Timing, scheduling, animation, and recurring execution are exclusively Lifga library concerns. Viesti has no concept of time.</li>
+      <li>Every Rumus function is finite. No function may directly recurse or contain cycles in its call graph.</li>
+      <li>Iteration exists only as explicit cycles in the Viesti signal graph.</li>
+      <li>The only mechanism that writes to Bija at runtime is a Viesti signal carrying a function output value.</li>
+      <li>No layer knows another layer exists. Bija does not know Rumus exists. Rumus does not know Viesti exists. Libraries do not know other libraries exist.</li>
+      <li>Library compilation passes run in import declaration order. Import order is pass order.</li>
+      <li>There is no compiler optimisation pass. Performance is a product of design quality.</li>
+      <li>Rumus core is substrate-independent. Target libraries declare substrate-specific instruction mappings. The current working target is <code>@rumus-riscv</code>.</li>
+      <li>The Rumus standard operation set covers five domains: arithmetic (<code>+ - * / %</code> and unary <code>-</code>), comparison (<code>= != &lt; &gt; &lt;= &gt;=</code>), boolean (<code>&amp; | !</code>), conditional (<code>a ? b : c</code>), and formal logic (<code>-&gt; &lt;-&gt; ^ !&amp; !| &lt;-</code>). Bitwise operations are hardware-specific and belong in a systems target library.</li>
+      <li>Formal logic operators are assertions, not expressions. If an assertion fails, execution halts with the function path and the specific assertion that failed.</li>
+      <li>The conditional <code>a ? b : c</code> produces a value through pure transformation of inputs. Any selection that routes to meaningfully different behaviours belongs in Viesti.</li>
+      <li>File I/O, database access, and session persistence are exclusively Zapis library concerns.</li>
+    </ul>
+  </section>
+
+  <section id="sA" class="spec-section">
+    <h2>Appendix — Quick-Reference Card</h2>
+
+    <h3>Bija Symbols</h3>
+    <table class="spec-table">
+      <thead><tr><th>Token</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>EntityName;</td><td>Entity declaration</td></tr>
+        <tr><td>name: value</td><td>Property</td></tr>
+        <tr><td>name: empty</td><td>Explicit empty value</td></tr>
+        <tr><td>#Entity.prop</td><td>Alias (same address, resolved at compile time)</td></tr>
+        <tr><td>=Entity.prop</td><td>Value copy (copied at parse time, source forgotten)</td></tr>
+        <tr><td>| v1, v2 |</td><td>Positional override</td></tr>
+        <tr><td>!N</td><td>Multiplier — stamp N instances</td></tr>
+        <tr><td>-</td><td>Ordered list marker</td></tr>
+        <tr><td>*</td><td>Unordered list marker</td></tr>
+        <tr><td>{flag}</td><td>Metadata boolean</td></tr>
+        <tr><td>[...]</td><td>Literal string (no parsing inside, may span lines)</td></tr>
+        <tr><td>(...)</td><td>Comment</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Rumus Symbols</h3>
+    <table class="spec-table">
+      <thead><tr><th>Token</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>? Name{p1, p2};</td><td>Function declaration</td></tr>
+        <tr><td>name: expr</td><td>Named binding (let)</td></tr>
+        <tr><td>~name</td><td>Output declaration</td></tr>
+        <tr><td>#Entity.prop</td><td>Live Bija read (compiler expands to inbound signal)</td></tr>
+        <tr><td>+ - * / %</td><td>Arithmetic</td></tr>
+        <tr><td>-x</td><td>Unary negation</td></tr>
+        <tr><td>= != &lt; &gt; &lt;= &gt;=</td><td>Comparison (= is equality, not assignment)</td></tr>
+        <tr><td>&amp; | !</td><td>Boolean AND / OR / NOT</td></tr>
+        <tr><td>a ? b : c</td><td>Conditional</td></tr>
+        <tr><td>a -&gt; b</td><td>Implication assertion</td></tr>
+        <tr><td>a &lt;-&gt; b</td><td>Biconditional assertion</td></tr>
+        <tr><td>a ^ b</td><td>Exclusive or assertion</td></tr>
+        <tr><td>a !&amp; b</td><td>NAND assertion</td></tr>
+        <tr><td>a !| b</td><td>NOR assertion</td></tr>
+        <tr><td>a &lt;- b</td><td>Converse implication assertion</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Viesti Symbols</h3>
+    <table class="spec-table">
+      <thead><tr><th>Token</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>A ~ B ~ C</td><td>Sequential signal chain</td></tr>
+        <tr><td>A ~~ B</td><td>Parallel signal (concurrent with peer ~~ signals)</td></tr>
+        <tr><td>A ~ B ~</td><td>Dormant signal (no target)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+</div>
+</main>
+
+<script>
+  const sections = document.querySelectorAll('.spec-section');
+  const links = document.querySelectorAll('.nav-link');
+  const main = document.getElementById('main');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + id));
+      }
+    });
+  }, { root: main, rootMargin: '-5% 0px -85% 0px', threshold: 0 });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
